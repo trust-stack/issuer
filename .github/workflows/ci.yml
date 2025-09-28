@@ -85,7 +85,6 @@ jobs:
           name: Unit Tests
           path: reports/unit-tests.xml
           reporter: vitest
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -120,7 +119,6 @@ jobs:
           name: E2E Tests
           path: reports/e2e-tests.xml
           reporter: vitest
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   openapi:
     runs-on: ubuntu-latest
