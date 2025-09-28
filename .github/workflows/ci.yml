@@ -32,8 +32,32 @@ jobs:
       - name: Type check
         run: pnpm exec tsc --noEmit
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run unit tests
+        run: |
+          mkdir -p reports
+          pnpm exec vitest run --config vitest.config.mts --reporter=default --reporter=junit --outputFile=reports/unit-tests.xml
+
+      - name: Upload unit test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Unit Tests
+          path: reports/unit-tests.xml
+          reporter: vitest
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run e2e tests
+        run: |
+          pnpm exec vitest run --config vitest.e2e.config.mts --reporter=default --reporter=junit --outputFile=reports/e2e-tests.xml
+
+      - name: Upload e2e test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: E2E Tests
+          path: reports/e2e-tests.xml
+          reporter: vitest
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate OpenAPI schema
         run: pnpm run openapi:generate
