@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "pnpm run test:unit && pnpm run test:e2e",
-    "openapi:generate": "node scripts/generate-openapi.js",
+    "openapi:generate": "tsx scripts/generate-openapi.ts",
     "build": "tsc",
     "test:unit": "vitest run --config vitest.config.mts",
     "test:e2e": "vitest run --config vitest.e2e.config.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +24,8 @@
     "vitest": "^3.2.4",
     "prettier": "^3.3.3",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.7"
+    "lint-staged": "^15.2.7",
+    "tsx": "^4.15.1"
   },
   "dependencies": {
     "@hono/standard-validator": "^0.1.5",

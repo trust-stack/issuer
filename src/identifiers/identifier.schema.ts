@@ -1,12 +1,28 @@
-import {z} from "@hono/zod-openapi";
+import { z } from '@hono/zod-openapi';
 
 export const IdentifierParamsSchema = z.object({
-  did: z
-    .string()
-    .openapi({
-      description: "Decentralized identifier (did:web, did:key, etc)",
-    }),
+  did: z.string().openapi({
+    description: 'Decentralized identifier (did:web, did:key, etc)',
+  }),
 });
+
+export const IdentifierHeadersSchema = z
+  .object({
+    'x-organization-id': z
+      .string()
+      .min(1)
+      .openapi({ description: 'Organization context for the request' }),
+    'x-tenant-id': z
+      .string()
+      .min(1)
+      .openapi({ description: 'Tenant identifier for multi-tenant use cases' }),
+    'x-user-id': z
+      .string()
+      .min(1)
+      .optional()
+      .openapi({ description: 'User identifier making the request (optional)' }),
+  })
+  .openapi({ description: 'Authentication headers' });
 
 export const CreateIdentifierSchema = z
   .object({
@@ -14,10 +30,10 @@ export const CreateIdentifierSchema = z
       .string()
       .min(1)
       .max(255)
-      .openapi({ description: "Friendly alias for the identifier" })
+      .openapi({ description: 'Friendly alias for the identifier' })
       .optional(),
   })
-  .openapi({ description: "Payload to create a new identifier" });
+  .openapi({ description: 'Payload to create a new identifier' });
 
 export const UpdateIdentifierSchema = z
   .object({
@@ -25,25 +41,25 @@ export const UpdateIdentifierSchema = z
       .string()
       .min(1)
       .max(255)
-      .openapi({ description: "Updated alias for the identifier" })
+      .openapi({ description: 'Updated alias for the identifier' })
       .optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
-    message: "At least one property must be provided",
+    message: 'At least one property must be provided',
     path: [],
   })
-  .openapi({ description: "Payload to update an identifier" });
+  .openapi({ description: 'Payload to update an identifier' });
 
 const IdentifierKeySchema = z
   .object({
-    kid: z.string().openapi({ description: "Key identifier" }),
+    kid: z.string().openapi({ description: 'Key identifier' }),
     type: z.string().optional(),
     kms: z.string().optional(),
     publicKeyHex: z.string().optional(),
     meta: z.unknown().optional(),
   })
   .passthrough()
-  .openapi({ description: "Key material associated with the identifier" });
+  .openapi({ description: 'Key material associated with the identifier' });
 
 const IdentifierServiceSchema = z
   .object({
@@ -53,7 +69,7 @@ const IdentifierServiceSchema = z
     description: z.string().optional(),
   })
   .passthrough()
-  .openapi({ description: "DID service entry" });
+  .openapi({ description: 'DID service entry' });
 
 export const IdentifierSchema = z
   .object({
@@ -65,4 +81,4 @@ export const IdentifierSchema = z
     services: z.array(IdentifierServiceSchema).default([]),
   })
   .passthrough()
-  .openapi({ description: "Identifier representation" });
+  .openapi({ description: 'Identifier representation' });
