@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - "release/**"
+      - 'release/**'
   pull_request:
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
         with:
           name: Unit Tests
           path: reports/unit-tests.xml
-          reporter: vitest
+          reporter: junit
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run e2e tests
@@ -56,7 +56,7 @@ jobs:
         with:
           name: E2E Tests
           path: reports/e2e-tests.xml
-          reporter: vitest
+          reporter: junit
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate OpenAPI schema
