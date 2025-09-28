@@ -8,9 +8,29 @@ on:
   pull_request:
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+  typecheck:
+    runs-on: ubuntu-latest
+    needs: setup
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,28 +52,96 @@ jobs:
       - name: Type check
         run: pnpm exec tsc --noEmit
 
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run unit tests
         run: |
           mkdir -p reports
           pnpm exec vitest run --config vitest.config.mts --reporter=default --reporter=junit --outputFile=reports/unit-tests.xml
 
-      - name: Upload unit test report
+      - name: Publish unit test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: dorny/test-reporter@v1
         with:
-          name: vitest-report
-          path: reports/
+          name: Unit Tests
+          path: reports/unit-tests.xml
+          reporter: vitest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Run e2e tests
         run: |
+          mkdir -p reports
           pnpm exec vitest run --config vitest.e2e.config.mts --reporter=default --reporter=junit --outputFile=reports/e2e-tests.xml
 
-      - name: Upload e2e test report
+      - name: Publish e2e test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: dorny/test-reporter@v1
         with:
-          name: vitest-report
-          path: reports/
+          name: E2E Tests
+          path: reports/e2e-tests.xml
+          reporter: vitest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  openapi:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Generate OpenAPI schema
         run: pnpm run openapi:generate
