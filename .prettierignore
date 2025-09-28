@@ -3,5 +3,4 @@ dist/
 coverage/
 reports/
 openapi.json
-.DS_Store
-.env
+.husky/

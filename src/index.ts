@@ -1,14 +1,12 @@
-import {Hono} from "hono";
-import credentialRoutes from "./credentials/routes";
-import identifierRoutes from "./identifiers/routes";
-import {requestContext} from "./request-context";
+import { OpenAPIHono } from '@hono/zod-openapi';
+import identifiers from './identifiers/identifier.handler';
+import { requestContext } from './request-context';
 
-const app = new Hono();
+const app = new OpenAPIHono();
 
 app.use(requestContext);
 
-app.get("/", (c) => c.text("Hello World"));
-app.route("/dids", identifierRoutes);
-app.route("/credentials", credentialRoutes);
+app.get('/', (c) => c.text('Hello World'));
+app.route('/dids', identifiers);
 
 export default app;

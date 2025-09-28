@@ -1,11 +1,11 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import type {RequestInfo, RequestInit} from 'undici';
+import {Hono} from 'hono';
 import type {IdentifierRepository} from './identifier.repository';
 import {setIdentifierRepository} from './identifier.repository';
 import {mapAgentIdentifierToDto} from './identifier.mapper';
 import type {IIdentifier} from '@veramo/core';
 import identifierApp from './identifier.handler';
-import {runWithRequestContext} from '../request-context';
+import {requestContext} from '../request-context';
 import type {IdentifierResponse} from './identifier.dto';
 
 vi.mock('../agent/agent', () => {
@@ -76,13 +76,24 @@ class InMemoryIdentifierRepository implements IdentifierRepository {
   }
 }
 
-const authContext = {
-  tenantId: 'tenant-e2e',
-  organizationId: 'org-e2e',
+const app = new Hono();
+app.use('*', requestContext);
+app.route('/', identifierApp);
+
+const defaultHeaders = {
+  'x-organization-id': 'org-e2e',
+  'x-tenant-id': 'tenant-e2e',
+  'x-user-id': 'user-e2e',
 };
 
-const makeRequest = async (input: RequestInfo, init?: RequestInit) =>
-  runWithRequestContext({auth: authContext}, () => identifierApp.request(input, init));
+const makeRequest = (input: RequestInfo, init?: RequestInit) =>
+  app.request(input, {
+    ...init,
+    headers: {
+      ...defaultHeaders,
+      ...(init?.headers as Record<string, string> | undefined),
+    },
+  });
 
 const resetAgentStore = () => {
   if (typeof (agent as any).__reset === 'function') {

@@ -1,70 +1,74 @@
-import {createRoute} from "@hono/zod-openapi";
+import { createRoute } from '@hono/zod-openapi';
 import {
   CreateIdentifierSchema,
+  IdentifierHeadersSchema,
   IdentifierParamsSchema,
   IdentifierSchema,
   UpdateIdentifierSchema,
-} from "./identifier.schema";
+} from './identifier.schema';
 
 export const createIdentifierRoute = createRoute({
-  method: "post",
-  path: "/",
+  method: 'post',
+  path: '/',
   request: {
+    headers: IdentifierHeadersSchema,
     body: {
       content: {
-        "application/json": {schema: CreateIdentifierSchema},
+        'application/json': { schema: CreateIdentifierSchema },
       },
     },
   },
   responses: {
     201: {
-      description: "Identifier created",
+      description: 'Identifier created',
       content: {
-        "application/json": {schema: IdentifierSchema},
+        'application/json': { schema: IdentifierSchema },
       },
     },
   },
 });
 
 export const getIdentifierRoute = createRoute({
-  method: "get",
-  path: "/{did}",
+  method: 'get',
+  path: '/{did}',
   request: {
+    headers: IdentifierHeadersSchema,
     params: IdentifierParamsSchema,
   },
   responses: {
     200: {
-      description: "Identifier fetched",
+      description: 'Identifier fetched',
       content: {
-        "application/json": {schema: IdentifierSchema},
+        'application/json': { schema: IdentifierSchema },
       },
     },
     404: {
-      description: "Identifier not found",
+      description: 'Identifier not found',
     },
   },
 });
 
 export const updateIdentifierRoute = createRoute({
-  method: "patch",
-  path: "/{did}",
+  method: 'patch',
+  path: '/{did}',
   request: {
+    headers: IdentifierHeadersSchema,
     params: IdentifierParamsSchema,
     body: {
       content: {
-        "application/json": {schema: UpdateIdentifierSchema},
+        'application/json': { schema: UpdateIdentifierSchema },
       },
     },
   },
   responses: {
     200: {
-      description: "Identifier updated",
+      description: 'Identifier updated',
       content: {
-        "application/json": {schema: IdentifierSchema},
+        'application/json': { schema: IdentifierSchema },
       },
     },
     404: {
-      description: "Identifier not found",
+      description: 'Identifier not found',
     },
   },
 });
