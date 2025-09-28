@@ -39,12 +39,10 @@ jobs:
 
       - name: Upload unit test report
         if: always()
-        uses: dorny/test-reporter@v1
+        uses: actions/upload-artifact@v4
         with:
-          name: Unit Tests
-          path: reports/unit-tests.xml
-          reporter: junit
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: vitest-report
+          path: reports/
 
       - name: Run e2e tests
         run: |
@@ -52,12 +50,10 @@ jobs:
 
       - name: Upload e2e test report
         if: always()
-        uses: dorny/test-reporter@v1
+        uses: actions/upload-artifact@v4
         with:
-          name: E2E Tests
-          path: reports/e2e-tests.xml
-          reporter: junit
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: vitest-report
+          path: reports/
 
       - name: Generate OpenAPI schema
         run: pnpm run openapi:generate
