@@ -1,7 +1,9 @@
+import { uuid } from 'src/utils';
 import z from 'zod';
-import { agent } from '../agent/agent';
-import { CreateIdentifierDto, IdentifierDto, toIdentifierDto } from './identifier.dto';
-import { getIdentifierByDid } from './identifiers.repository';
+import { getAgent } from '../agent';
+import { CreateIdentifierDto, IdentifierDto, toIdentifierDto } from './identifiers.dto';
+import { getIdentifierByAlias } from './identifiers.repository';
+import { constructAlias } from './identifiers.utils';
 
 export const Identifier = z.object({
   id: z.string(),
@@ -17,11 +19,16 @@ export type Identifier = z.infer<typeof Identifier>;
  * @returns
  */
 export async function createIdentifier(dto: CreateIdentifierDto): Promise<IdentifierDto> {
+  const agent = getAgent();
+
+  const alias = constructAlias(dto.alias || uuid());
+
   const identifier = await agent.didManagerCreate({
-    alias: dto.alias,
+    alias,
+    provider: 'did:web',
   });
 
-  return getIdentifierByDid(identifier.alias!).then((identifier) => {
+  return getIdentifierByAlias(identifier.alias!).then((identifier) => {
     if (!identifier) throw new Error('Identifier not found');
     return toIdentifierDto(identifier);
   });

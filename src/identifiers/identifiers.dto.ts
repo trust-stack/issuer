@@ -31,6 +31,7 @@ export type UpdateIdentifierDto = z.infer<typeof UpdateIdentifierSchema>;
 
 export const IdentifierSchema = z
   .object({
+    id: z.string(),
     did: z.string(),
     provider: z.string().optional(),
     controllerKeyId: z.string().optional(),
@@ -42,6 +43,7 @@ export type IdentifierDto = z.infer<typeof IdentifierSchema>;
 
 export const toIdentifierDto = (identifier: Identifier): IdentifierDto => {
   return {
+    id: identifier.id,
     did: identifier.did,
     alias: identifier.alias,
   };

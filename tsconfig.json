@@ -3,15 +3,16 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "ESNext",
-    "rootDir": "src",
+    "rootDir": "./",
+    "baseUrl": "./",
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "e2e/**/*.ts"],
   "exclude": ["src/**/*.test.ts"]
 }

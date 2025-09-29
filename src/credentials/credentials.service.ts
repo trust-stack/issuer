@@ -1,6 +1,8 @@
 import { VerifiableCredential } from '@veramo/core';
-import { agent } from '../agent';
-import { getIdentifierByAlias, getIdentifierByDid, Identifier } from '../identifiers';
+
+import { getAgent } from 'src/agent';
+import { Identifier } from 'src/identifiers/identifiers.service';
+import { getIdentifierByAlias, getIdentifierByDid } from '../identifiers';
 import { CreateCredentialDto } from './credentials.dto';
 
 /**
@@ -10,6 +12,7 @@ import { CreateCredentialDto } from './credentials.dto';
  */
 export async function createCredential(dto: CreateCredentialDto): Promise<VerifiableCredential> {
   let identifier: Identifier | null = null;
+  const agent = getAgent();
 
   // Load identifier from alias or did
   if (dto.issuerDid.alias) identifier = await getIdentifierByAlias(dto.issuerDid.alias);

@@ -8,15 +8,20 @@
     "openapi:generate": "tsx scripts/generate-openapi.ts",
     "build": "tsc",
     "test": "vitest run --config vitest.config.mts",
+    "test:e2e": "vitest watch --config vitest.e2e.config.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "drizzle:generate": "drizzle-kit generate",
+    "drizzle:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.5.2",
+    "better-sqlite3": "^12.4.1",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "prettier": "^3.3.3",

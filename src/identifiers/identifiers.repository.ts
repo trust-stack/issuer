@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { getDb } from 'src/db/instance';
 import { identifiers } from '../db/schema';
 import { getRequestContext } from '../request-context';
-import { UpdateIdentifierDto } from './identifier.dto';
+import { UpdateIdentifierDto } from './identifiers.dto';
 import { Identifier } from './identifiers.service';
 
 type DbIdentifier = typeof identifiers.$inferSelect;
@@ -14,7 +14,7 @@ type DbIdentifier = typeof identifiers.$inferSelect;
  */
 export async function getIdentifierById(id: string): Promise<Identifier | null> {
   const { auth } = getRequestContext();
-
+  const db = getDb();
   const [result] = await db
     .select()
     .from(identifiers)
@@ -31,6 +31,8 @@ export async function getIdentifierById(id: string): Promise<Identifier | null> 
  */
 export async function getIdentifierByDid(did: string): Promise<Identifier | null> {
   const { auth } = getRequestContext();
+  const db = getDb();
+
   const [result] = await db
     .select()
     .from(identifiers)
@@ -46,6 +48,7 @@ export async function getIdentifierByDid(did: string): Promise<Identifier | null
  */
 export async function getIdentifierByAlias(alias: string): Promise<Identifier | null> {
   const { auth } = getRequestContext();
+  const db = getDb();
   const [result] = await db
     .select()
     .from(identifiers)
@@ -65,6 +68,7 @@ export async function updateIdentifier(
   dto: UpdateIdentifierDto,
 ): Promise<Identifier | null> {
   const { auth } = getRequestContext();
+  const db = getDb();
   const [result] = await db
     .update(identifiers)
     .set(dto)

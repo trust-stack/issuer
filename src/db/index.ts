@@ -1,5 +1,3 @@
-import {drizzle} from "drizzle-orm/d1";
+import type { getDb } from './instance';
 
-export const db = drizzle(process.env.DATABASE_URL);
-
-export type Database = typeof db;
+export type Database = ReturnType<typeof getDb>;

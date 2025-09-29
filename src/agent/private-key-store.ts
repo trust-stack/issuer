@@ -1,12 +1,18 @@
 import { AbstractPrivateKeyStore, ManagedPrivateKey } from '@veramo/key-manager';
 import { eq } from 'drizzle-orm';
-import { db } from '../db';
+import { Database } from 'src/db';
+import { getDb } from 'src/db/instance';
 import { KeyType, privateKeys } from '../db/schema';
-import { uuid } from '../db/schema/utils';
 
 export class PrivateKeyStore implements AbstractPrivateKeyStore {
+  private db: Database;
+
+  constructor() {
+    this.db = getDb();
+  }
+
   public async getKey(args: { alias: string }): Promise<ManagedPrivateKey> {
-    const [key] = await db
+    const [key] = await this.db
       .select()
       .from(privateKeys)
       .where(eq(privateKeys.alias, args.alias))
@@ -18,7 +24,7 @@ export class PrivateKeyStore implements AbstractPrivateKeyStore {
   }
 
   public async deleteKey(args: { alias: string }): Promise<boolean> {
-    await db.delete(privateKeys).where(eq(privateKeys.alias, args.alias));
+    await this.db.delete(privateKeys).where(eq(privateKeys.alias, args.alias));
 
     return true;
   }
@@ -28,17 +34,19 @@ export class PrivateKeyStore implements AbstractPrivateKeyStore {
     privateKeyHex: string;
     type: string;
   }): Promise<ManagedPrivateKey> {
-    const [key] = await db.insert(privateKeys).values({
-      alias: args.alias || uuid(),
-      privateKeyHex: args.privateKeyHex,
-      type: args.type as KeyType,
-    });
+    const [key] = await this.db
+      .insert(privateKeys)
+      .values({
+        alias: args.alias!,
+        privateKeyHex: args.privateKeyHex,
+        type: args.type as KeyType,
+      })
+      .returning();
 
     return key as ManagedPrivateKey;
   }
 
   public async listKeys(): Promise<ManagedPrivateKey[]> {
-    const keys = await db.select().from(privateKeys);
-    return keys;
+    return this.db.select().from(privateKeys);
   }
 }

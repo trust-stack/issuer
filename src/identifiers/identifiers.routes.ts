@@ -1,10 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import {
-  CreateIdentifierSchema,
-  // IdentifierHeadersSchema,
-  // IdentifierParamsSchema,
-  IdentifierSchema,
-} from './identifier.dto';
+import { CreateIdentifierSchema, IdentifierSchema } from './identifiers.dto';
 
 export const createIdentifierRoute = createRoute({
   method: 'post',

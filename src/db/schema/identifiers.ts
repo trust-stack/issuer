@@ -1,10 +1,13 @@
 import { sql } from 'drizzle-orm';
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { uuid } from 'src/utils';
 import { keyTypeEnum } from './enums';
-import { uuid } from './utils';
 
 export const identifiers = sqliteTable('identifiers', {
-  id: text('id').unique().default(uuid()).notNull(),
+  id: text('id')
+    .unique()
+    .notNull()
+    .$defaultFn(() => uuid()),
   did: text('did').unique().notNull(),
   organizationId: text('organization_id').notNull(),
   provider: text('provider').notNull(),
@@ -44,7 +47,9 @@ export const privateKeys = sqliteTable('private_keys', {
 export const services = sqliteTable(
   'services',
   {
-    id: text('id').primaryKey().default(uuid()),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => uuid()),
     type: text('type').notNull(),
     serviceEndpoint: text('service_endpoint', { mode: 'json' }).notNull().$type<string[]>(),
     description: text('description'),

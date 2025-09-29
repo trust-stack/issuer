@@ -1,11 +1,18 @@
-import type {IIdentifier} from "@veramo/core";
-import {AbstractDIDStore} from "@veramo/did-manager";
-import {eq} from "drizzle-orm";
-import {db} from "../db";
-import {cryptoKeys, identifiers} from "../db/schema/identifiers";
-import {getRequestContext} from "../request-context";
+import type { IIdentifier } from '@veramo/core';
+import { AbstractDIDStore } from '@veramo/did-manager';
+import { eq } from 'drizzle-orm';
+import { Database } from 'src/db';
+import { getDb } from 'src/db/instance';
+import { cryptoKeys, identifiers } from '../db/schema/identifiers';
+import { getRequestContext } from '../request-context';
 
 export class DidStore implements AbstractDIDStore {
+  private db: Database;
+
+  constructor() {
+    this.db = getDb();
+  }
+
   /**
    * Import a DID into the database
    * @param did
@@ -25,37 +32,47 @@ export class DidStore implements AbstractDIDStore {
   }: IIdentifier): Promise<boolean> {
     const context = getRequestContext();
 
-    await db.transaction(async (tx) => {
-      // Upsert identifier
-      await tx.insert(identifiers).values({
-        did,
-        controllerKeyId,
-        provider,
-        alias: alias ?? "",
-        organizationId: context.auth.organizationId,
-      });
+    // Upsert identifier
+    await this.db.insert(identifiers).values({
+      did,
+      controllerKeyId,
+      provider,
+      alias: alias ?? '',
+      organizationId: context.auth.organizationId,
+    });
 
-      // Connect or create keys
-      for (const key of keys) {
-        await tx.insert(cryptoKeys).values({
+    // Connect or create keys
+    for (const key of keys) {
+      await this.db
+        .insert(cryptoKeys)
+        .values({
           kid: key.kid,
           publicKeyHex: key.publicKeyHex,
           kms: key.kms,
           meta: key.meta,
           type: key.type,
           privateKeyHex: key.privateKeyHex,
+        })
+        .onConflictDoUpdate({
+          target: cryptoKeys.kid,
+          set: {
+            publicKeyHex: key.publicKeyHex,
+            kms: key.kms,
+            meta: key.meta,
+            type: key.type,
+            privateKeyHex: key.privateKeyHex,
+          },
         });
-      }
+    }
 
-      //   //   Connect or create services
-      //   for (const service of serv) {
-      //     await tx.insert(services).values({
-      //       id: service.id,
-      //       type: service.type,
-      //       serviceEndpoint: service.serviceEndpoint,
-      //     });
-      //   }
-    });
+    //   //   Connect or create services
+    //   for (const service of serv) {
+    //     await tx.insert(services).values({
+    //       id: service.id,
+    //       type: service.type,
+    //       serviceEndpoint: service.serviceEndpoint,
+    //     });
+    //   }
 
     return true;
   }
@@ -66,38 +83,24 @@ export class DidStore implements AbstractDIDStore {
    * @param alias
    * @returns
    */
-  public async getDID({
-    did,
-    alias,
-  }: {
-    did?: string;
-    alias?: string;
-  }): Promise<IIdentifier> {
+  public async getDID({ did, alias }: { did?: string; alias?: string }): Promise<IIdentifier> {
     const context = getRequestContext();
 
     if (did) {
-      const [result] = await db
-        .select()
-        .from(identifiers)
-        .where(eq(identifiers.did, did));
+      const [result] = await this.db.select().from(identifiers).where(eq(identifiers.did, did));
 
       return this.toIdentifier(result);
     } else if (alias) {
-      const [result] = await db
-        .select()
-        .from(identifiers)
-        .where(eq(identifiers.alias, alias));
+      const [result] = await this.db.select().from(identifiers).where(eq(identifiers.alias, alias));
 
       return this.toIdentifier(result);
     } else {
-      throw new Error("Did or alias is required");
+      throw new Error('Did or alias is required');
     }
   }
 
-  public async deleteDID({did}: {did: string}): Promise<boolean> {
-    const context = getRequestContext();
-
-    await db.delete(identifiers).where(eq(identifiers.did, did));
+  public async deleteDID({ did }: { did: string }): Promise<boolean> {
+    await this.db.delete(identifiers).where(eq(identifiers.did, did));
 
     return true;
   }
@@ -110,8 +113,7 @@ export class DidStore implements AbstractDIDStore {
     provider?: string;
   } = {}): Promise<IIdentifier[]> {
     const context = getRequestContext();
-
-    const results = await db
+    const results = await this.db
       .select()
       .from(identifiers)
       .where(eq(identifiers.organizationId, context.auth.organizationId));
