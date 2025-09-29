@@ -1,14 +1,48 @@
 import { z } from 'zod';
-import {
-  CreateIdentifierSchema,
-  IdentifierHeadersSchema,
-  IdentifierParamsSchema,
-  IdentifierSchema,
-  UpdateIdentifierSchema,
-} from './identifier.schema';
+import { Identifier } from './identifiers.service';
 
+export const CreateIdentifierSchema = z
+  .object({
+    alias: z
+      .string()
+      .min(1)
+      .max(255)
+      .openapi({ description: 'Friendly alias for the identifier' })
+      .optional(),
+  })
+  .openapi({ description: 'Payload to create a new identifier' });
 export type CreateIdentifierDto = z.infer<typeof CreateIdentifierSchema>;
+
+export const UpdateIdentifierSchema = z
+  .object({
+    alias: z
+      .string()
+      .min(1)
+      .max(255)
+      .openapi({ description: 'Updated alias for the identifier' })
+      .optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one property must be provided',
+    path: [],
+  })
+  .openapi({ description: 'Payload to update an identifier' });
 export type UpdateIdentifierDto = z.infer<typeof UpdateIdentifierSchema>;
-export type IdentifierParams = z.infer<typeof IdentifierParamsSchema>;
-export type IdentifierResponse = z.infer<typeof IdentifierSchema>;
-export type IdentifierRequestHeaders = z.infer<typeof IdentifierHeadersSchema>;
+
+export const IdentifierSchema = z
+  .object({
+    did: z.string(),
+    provider: z.string().optional(),
+    controllerKeyId: z.string().optional(),
+    alias: z.string().optional(),
+  })
+  .openapi({ description: 'Identifier representation' });
+
+export type IdentifierDto = z.infer<typeof IdentifierSchema>;
+
+export const toIdentifierDto = (identifier: Identifier): IdentifierDto => {
+  return {
+    did: identifier.did,
+    alias: identifier.alias,
+  };
+};

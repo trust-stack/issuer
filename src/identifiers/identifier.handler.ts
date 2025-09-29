@@ -1,11 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { IdentifierNotFoundError } from './identifier.errors';
-import {
-  createIdentifierRoute,
-  getIdentifierRoute,
-  updateIdentifierRoute,
-} from './identifier.route';
-import { createIdentifier, getIdentifier, updateIdentifier } from './identifier.service';
+import { getIdentifierByDid } from './identifiers.repository';
+import { createIdentifierRoute, getIdentifierRoute } from './identifiers.routes';
+import { createIdentifier } from './identifiers.service';
 
 const app = new OpenAPIHono();
 
@@ -16,33 +12,8 @@ app.openapi(createIdentifierRoute, async (c) => {
 
 app.openapi(getIdentifierRoute, async (c) => {
   const { did } = c.req.valid('param');
-
-  try {
-    const identifier = await getIdentifier(did);
-    return c.json(identifier, 200);
-  } catch (error) {
-    if (error instanceof IdentifierNotFoundError) {
-      return c.json({ message: error.message }, 404);
-    }
-
-    throw error;
-  }
-});
-
-app.openapi(updateIdentifierRoute, async (c) => {
-  const { did } = c.req.valid('param');
-  const payload = c.req.valid('json');
-
-  try {
-    const identifier = await updateIdentifier(did, payload);
-    return c.json(identifier, 200);
-  } catch (error) {
-    if (error instanceof IdentifierNotFoundError) {
-      return c.json({ message: error.message }, 404);
-    }
-
-    throw error;
-  }
+  const identifier = await getIdentifierByDid(did);
+  return c.json(identifier, 200);
 });
 
 export default app;
