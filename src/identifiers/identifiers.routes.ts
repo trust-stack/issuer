@@ -24,11 +24,11 @@ export const createIdentifierRoute = createRoute({
 
 export const getIdentifierRoute = createRoute({
   method: 'get',
-  path: '/{did}',
+  path: '/{id}',
   request: {
     // headers: IdentifierHeadersSchema,
     params: z.object({
-      did: z.string(),
+      id: z.string(),
     }),
   },
   responses: {

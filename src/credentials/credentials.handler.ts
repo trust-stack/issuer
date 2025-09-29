@@ -6,5 +6,8 @@ const app = new OpenAPIHono();
 
 app.openapi(createCredentialRoute, async (c) => {
   const credential = await createCredential(c.req.valid('json'));
+
   return c.json({ id: credential.id! }, 201);
 });
+
+export default app;

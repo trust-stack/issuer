@@ -24,7 +24,7 @@ export async function createCredential(dto: CreateCredentialDto): Promise<Verifi
   const credential = await agent.createVerifiableCredential({
     credential: {
       issuer: { id: identifier.did },
-      credentialSubject: dto.credential,
+      credentialSubject: dto.credential as Record<string, unknown>,
     },
     proofFormat: 'jwt',
   });

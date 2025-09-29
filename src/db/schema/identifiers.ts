@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { uuid } from 'src/utils';
 import { keyTypeEnum } from './enums';
@@ -61,3 +61,23 @@ export const services = sqliteTable(
   },
   (table) => [index('services_tenant_idx').on(table.tenantId)],
 );
+
+// Define relations
+export const identifiersRelations = relations(identifiers, ({ many }) => ({
+  cryptoKeys: many(cryptoKeys),
+  services: many(services),
+}));
+
+export const cryptoKeysRelations = relations(cryptoKeys, ({ one }) => ({
+  identifier: one(identifiers, {
+    fields: [cryptoKeys.identifierDid],
+    references: [identifiers.did],
+  }),
+}));
+
+export const servicesRelations = relations(services, ({ one }) => ({
+  identifier: one(identifiers, {
+    fields: [services.identifierDid],
+    references: [identifiers.did],
+  }),
+}));

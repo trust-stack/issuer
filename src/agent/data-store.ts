@@ -272,29 +272,27 @@ export class DataStore implements IAgentPlugin {
   private async dataStoreDeleteVerifiableCredential({
     hash,
   }: IDataStoreDeleteVerifiableCredentialArgs): Promise<boolean> {
-    return this.db.transaction(async (tx) => {
-      const credential = first(
-        await tx
-          .select({ id: credentials.id })
-          .from(credentials)
-          .where(eq(credentials.hash, hash))
-          .limit(1),
-      );
+    const credential = first(
+      await this.db
+        .select({ id: credentials.id })
+        .from(credentials)
+        .where(eq(credentials.hash, hash))
+        .limit(1),
+    );
 
-      if (!credential) return false;
+    if (!credential) return false;
 
-      await tx.delete(vcClaims).where(eq(vcClaims.credentialId, hash));
-      await tx.delete(credentialMessages).where(eq(credentialMessages.credentialHash, hash));
-      await tx
-        .delete(presentationCredentials)
-        .where(eq(presentationCredentials.credentialHash, hash));
-      await tx
-        .delete(encryptedCredentials)
-        .where(eq(encryptedCredentials.credentialId, credential.id));
-      await tx.delete(credentials).where(eq(credentials.hash, hash));
+    await this.db.delete(vcClaims).where(eq(vcClaims.credentialId, hash));
+    await this.db.delete(credentialMessages).where(eq(credentialMessages.credentialHash, hash));
+    await this.db
+      .delete(presentationCredentials)
+      .where(eq(presentationCredentials.credentialHash, hash));
+    await this.db
+      .delete(encryptedCredentials)
+      .where(eq(encryptedCredentials.credentialId, credential.id));
+    await this.db.delete(credentials).where(eq(credentials.hash, hash));
 
-      return true;
-    });
+    return true;
   }
 
   private async dataStoreSaveVerifiablePresentation({
