@@ -9,4 +9,5 @@ export * from './presentation-messages.repository.sqlite';
 export * from './presentation-verifiers.repository.sqlite';
 export * from './presentations.repository.sqlite';
 export * from './private-keys.repository.sqlite';
+export * from './sqlite-drizzle';
 export * from './vc-claims.repository.sqlite';

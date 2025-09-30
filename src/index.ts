@@ -17,21 +17,21 @@ import { authMiddleware, dependencyMiddlewareFactory } from './request-context';
 import { VcClaimsRepository } from './vc-claims';
 
 export type AppOptions = {
-  credentialsRepository?: CredentialsRepository;
-  credentialMessagesRepository?: CredentialMessagesRepository;
-  encryptedCredentialsRepository?: EncryptedCredentialsRepository;
-  presentationCredentialsRepository?: PresentationCredentialsRepository;
-  presentationMessagesRepository?: PresentationMessagesRepository;
-  presentationVerifiersRepository?: PresentationVerifiersRepository;
-  presentationsRepository?: PresentationsRepository;
-  vcClaimsRepository?: VcClaimsRepository;
-  messagesRepository?: MessagesRepository;
-  identifiersRepository?: IdentifiersRepository;
-  keysRepository?: KeysRepository;
-  privateKeyRepository?: PrivateKeyRepository;
+  credentialMessagesRepository: CredentialMessagesRepository;
+  credentialsRepository: CredentialsRepository;
+  encryptedCredentialsRepository: EncryptedCredentialsRepository;
+  identifiersRepository: IdentifiersRepository;
+  keysRepository: KeysRepository;
+  messagesRepository: MessagesRepository;
+  presentationCredentialsRepository: PresentationCredentialsRepository;
+  presentationMessagesRepository: PresentationMessagesRepository;
+  presentationsRepository: PresentationsRepository;
+  presentationVerifiersRepository: PresentationVerifiersRepository;
+  privateKeyRepository: PrivateKeyRepository;
+  vcClaimsRepository: VcClaimsRepository;
 };
 
-export function createApp(options: AppOptions = {}) {
+export function createApp(options: AppOptions) {
   const app = new OpenAPIHono();
 
   app.use(contextStorage());

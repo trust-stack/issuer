@@ -1,15 +1,10 @@
 import { eq } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
 import { messages } from 'src/db/schema';
 import { MessageInsert, MessageRecord, MessagesRepository } from 'src/messages';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class MessagesRepositorySqlite implements MessagesRepository {
-  private readonly db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async saveMessage(message: MessageInsert): Promise<void> {
     const { id, ...update } = message;

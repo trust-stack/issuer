@@ -7,20 +7,6 @@ import { CredentialMessagesRepository } from './credential-messages';
 import { CredentialsRepository } from './credentials';
 import { EncryptedCredentialsRepository } from './encrypted-credentials';
 import { IdentifiersRepository } from './identifiers';
-import {
-  CredentialMessagesRepositorySqlite,
-  CredentialsRepositorySqlite,
-  EncryptedCredentialsRepositorySqlite,
-  IdentifiersRepositorySqlite,
-  KeysRepositorySqlite,
-  MessagesRepositorySqlite,
-  PresentationCredentialsRepositorySqlite,
-  PresentationMessagesRepositorySqlite,
-  PresentationsRepositorySqlite,
-  PresentationVerifiersRepositorySqlite,
-  PrivateKeysRepositorySqlite,
-  VcClaimsRepositorySqlite,
-} from './infra';
 import { KeysRepository } from './keys';
 import { MessagesRepository } from './messages';
 import { PresentationCredentialsRepository } from './presentation-credentials';
@@ -83,39 +69,18 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
 
 export const dependencyMiddlewareFactory = (options: AppOptions) => {
   const middleware: MiddlewareHandler = async (c, next) => {
-    const credentialsRepository =
-      options.credentialsRepository || new CredentialsRepositorySqlite();
-    const credentialMessagesRepository =
-      options.credentialMessagesRepository || new CredentialMessagesRepositorySqlite();
-    const encryptedCredentialsRepository =
-      options.encryptedCredentialsRepository || new EncryptedCredentialsRepositorySqlite();
-    const presentationCredentialsRepository =
-      options.presentationCredentialsRepository || new PresentationCredentialsRepositorySqlite();
-    const presentationMessagesRepository =
-      options.presentationMessagesRepository || new PresentationMessagesRepositorySqlite();
-    const presentationVerifiersRepository =
-      options.presentationVerifiersRepository || new PresentationVerifiersRepositorySqlite();
-    const presentationsRepository =
-      options.presentationsRepository || new PresentationsRepositorySqlite();
-    const vcClaimsRepository = options.vcClaimsRepository || new VcClaimsRepositorySqlite();
-    const messagesRepository = options.messagesRepository || new MessagesRepositorySqlite();
-    const identifiersRepository =
-      options.identifiersRepository || new IdentifiersRepositorySqlite();
-    const keysRepository = options.keysRepository || new KeysRepositorySqlite();
-    const privateKeyRepository = options.privateKeyRepository || new PrivateKeysRepositorySqlite();
-
-    c.set('credentialsRepository', credentialsRepository);
-    c.set('credentialMessagesRepository', credentialMessagesRepository);
-    c.set('encryptedCredentialsRepository', encryptedCredentialsRepository);
-    c.set('presentationCredentialsRepository', presentationCredentialsRepository);
-    c.set('presentationMessagesRepository', presentationMessagesRepository);
-    c.set('presentationVerifiersRepository', presentationVerifiersRepository);
-    c.set('presentationsRepository', presentationsRepository);
-    c.set('vcClaimsRepository', vcClaimsRepository);
-    c.set('messagesRepository', messagesRepository);
-    c.set('identifiersRepository', identifiersRepository);
-    c.set('keysRepository', keysRepository);
-    c.set('privateKeyRepository', privateKeyRepository);
+    c.set('credentialsRepository', options.credentialsRepository);
+    c.set('credentialMessagesRepository', options.credentialMessagesRepository);
+    c.set('encryptedCredentialsRepository', options.encryptedCredentialsRepository);
+    c.set('presentationCredentialsRepository', options.presentationCredentialsRepository);
+    c.set('presentationMessagesRepository', options.presentationMessagesRepository);
+    c.set('presentationVerifiersRepository', options.presentationVerifiersRepository);
+    c.set('presentationsRepository', options.presentationsRepository);
+    c.set('vcClaimsRepository', options.vcClaimsRepository);
+    c.set('messagesRepository', options.messagesRepository);
+    c.set('identifiersRepository', options.identifiersRepository);
+    c.set('keysRepository', options.keysRepository);
+    c.set('privateKeyRepository', options.privateKeyRepository);
     return next();
   };
 
