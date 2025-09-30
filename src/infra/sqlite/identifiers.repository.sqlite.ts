@@ -1,28 +1,23 @@
 import type { IIdentifier } from '@veramo/core';
-import { and, eq, InferSelectModel } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
+import { and, eq, InferSelectModel } from 'drizzle-orm';
 import { cryptoKeys, identifiers, services as servicesTable } from 'src/db/schema/identifiers';
+import type { UpdateIdentifierDto } from 'src/identifiers';
+import { Identifier } from 'src/identifiers';
 import {
   IdentifierListFilter,
   IdentifierLookup,
   IdentifiersRepository,
 } from 'src/identifiers/identifiers.repository';
-import type { UpdateIdentifierDto } from 'src/identifiers';
-import { Identifier } from 'src/identifiers';
 import { getRequestContext } from 'src/request-context';
+import { SqliteDb } from './sqlite-drizzle';
 
 type DbIdentifier = InferSelectModel<typeof identifiers>;
 type DbCryptoKey = InferSelectModel<typeof cryptoKeys>;
 type DbService = InferSelectModel<typeof servicesTable>;
 
 export class IdentifiersRepositorySqlite implements IdentifiersRepository {
-  private db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async findIdentifier(lookup: IdentifierLookup): Promise<Identifier | null> {
     const { auth } = getRequestContext();

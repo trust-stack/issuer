@@ -1,6 +1,4 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
 import { presentations } from 'src/db/schema/presentations';
 import {
   PresentationInsert,
@@ -8,13 +6,10 @@ import {
   PresentationsRepository,
 } from 'src/presentations/presentations.repository';
 import { getRequestContext } from 'src/request-context';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class PresentationsRepositorySqlite implements PresentationsRepository {
-  private readonly db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async savePresentation(presentation: PresentationInsert): Promise<void> {
     const { auth } = getRequestContext();

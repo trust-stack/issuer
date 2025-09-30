@@ -1,15 +1,10 @@
 import { eq } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
 import { presentationVerifiers } from 'src/db/schema/links';
 import { PresentationVerifiersRepository } from 'src/presentation-verifiers';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class PresentationVerifiersRepositorySqlite implements PresentationVerifiersRepository {
-  private readonly db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async replaceVerifiers(presentationHash: string, verifierDids: string[]): Promise<void> {
     await this.db

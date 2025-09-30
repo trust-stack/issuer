@@ -1,7 +1,5 @@
 import { ManagedPrivateKey } from '@veramo/key-manager';
 import { eq } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
 import { KeyType, privateKeys } from 'src/db/schema';
 import {
   CreatePrivateKeyArgs,
@@ -10,12 +8,10 @@ import {
   PrivateKeyRepository,
 } from 'src/private-key';
 import { uuid } from 'src/utils';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class PrivateKeysRepositorySqlite implements PrivateKeyRepository {
-  private db: Database;
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   public async createPrivateKey(args: CreatePrivateKeyArgs): Promise<ManagedPrivateKey> {
     const { alias, privateKeyHex, type } = args;

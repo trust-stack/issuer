@@ -1,20 +1,15 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
-import { credentials } from 'src/db/schema/credentials';
 import type {
   CredentialInsert,
   CredentialRecord,
   CredentialsRepository,
 } from 'src/credentials/credentials.repository';
+import { credentials } from 'src/db/schema/credentials';
 import { getRequestContext } from 'src/request-context';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class CredentialsRepositorySqlite implements CredentialsRepository {
-  private readonly db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async saveCredential(credential: CredentialInsert): Promise<void> {
     const { auth } = getRequestContext();

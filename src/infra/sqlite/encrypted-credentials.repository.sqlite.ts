@@ -1,18 +1,13 @@
 import { eq } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
 import { encryptedCredentials } from 'src/db/schema/credentials';
 import {
   EncryptedCredentialUpsert,
   EncryptedCredentialsRepository,
 } from 'src/encrypted-credentials/encrypted-credentials.repository';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class EncryptedCredentialsRepositorySqlite implements EncryptedCredentialsRepository {
-  private readonly db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async upsertEncryptedCredential(data: EncryptedCredentialUpsert): Promise<void> {
     const payload: typeof encryptedCredentials.$inferInsert = {

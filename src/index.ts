@@ -17,28 +17,30 @@ import { authMiddleware, dependencyMiddlewareFactory } from './request-context';
 import { VcClaimsRepository } from './vc-claims';
 
 export type AppOptions = {
-  credentialsRepository?: CredentialsRepository;
-  credentialMessagesRepository?: CredentialMessagesRepository;
-  encryptedCredentialsRepository?: EncryptedCredentialsRepository;
-  presentationCredentialsRepository?: PresentationCredentialsRepository;
-  presentationMessagesRepository?: PresentationMessagesRepository;
-  presentationVerifiersRepository?: PresentationVerifiersRepository;
-  presentationsRepository?: PresentationsRepository;
-  vcClaimsRepository?: VcClaimsRepository;
-  messagesRepository?: MessagesRepository;
-  identifiersRepository?: IdentifiersRepository;
-  keysRepository?: KeysRepository;
-  privateKeyRepository?: PrivateKeyRepository;
+  credentialMessagesRepository: CredentialMessagesRepository;
+  credentialsRepository: CredentialsRepository;
+  encryptedCredentialsRepository: EncryptedCredentialsRepository;
+  identifiersRepository: IdentifiersRepository;
+  keysRepository: KeysRepository;
+  messagesRepository: MessagesRepository;
+  presentationCredentialsRepository: PresentationCredentialsRepository;
+  presentationMessagesRepository: PresentationMessagesRepository;
+  presentationsRepository: PresentationsRepository;
+  presentationVerifiersRepository: PresentationVerifiersRepository;
+  privateKeyRepository: PrivateKeyRepository;
+  vcClaimsRepository: VcClaimsRepository;
 };
 
-export function createApp(options: AppOptions = {}) {
+export function createApp(options: AppOptions) {
   const app = new OpenAPIHono();
+
+  app.get('/', (c) => c.text('Hello World'));
+  app.get('/health', (c) => c.json({ status: 'ok' }));
 
   app.use(contextStorage());
   app.use(authMiddleware);
   app.use(dependencyMiddlewareFactory(options));
 
-  app.get('/', (c) => c.text('Hello World'));
   app.route('/identifiers', identifiers);
   app.route('/credentials', credentials);
 

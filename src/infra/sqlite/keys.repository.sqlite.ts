@@ -1,16 +1,11 @@
 import type { IKey, ManagedKeyInfo } from '@veramo/core';
 import { eq } from 'drizzle-orm';
-import { Database } from 'src/db';
-import { getDb } from 'src/db/instance';
 import { cryptoKeys } from 'src/db/schema/identifiers';
 import { KeysRepository } from 'src/keys';
+import { SqliteDb } from './sqlite-drizzle';
 
 export class KeysRepositorySqlite implements KeysRepository {
-  private readonly db: Database;
-
-  constructor() {
-    this.db = getDb();
-  }
+  constructor(private db: SqliteDb) {}
 
   async saveKey(key: Partial<IKey>): Promise<void> {
     if (!key.kid || !key.type || !key.kms || !key.publicKeyHex) {
