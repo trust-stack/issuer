@@ -34,11 +34,12 @@ export type AppOptions = {
 export function createApp(options: AppOptions) {
   const app = new OpenAPIHono();
 
+  app.get('/', (c) => c.text('Hello World'));
+
   app.use(contextStorage());
   app.use(authMiddleware);
   app.use(dependencyMiddlewareFactory(options));
 
-  app.get('/', (c) => c.text('Hello World'));
   app.route('/identifiers', identifiers);
   app.route('/credentials', credentials);
 
