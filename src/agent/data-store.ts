@@ -11,29 +11,21 @@ import {
   VerifiablePresentation,
 } from '@veramo/core';
 import { computeEntryHash, extractIssuer } from '@veramo/utils';
-import type { InferInsertModel } from 'drizzle-orm';
-import { eq, inArray } from 'drizzle-orm';
-import { getDb } from 'src/db/instance';
-import { Database } from '../db';
-import {
-  credentialMessages,
-  credentials,
-  encryptedCredentials,
-  messages,
-  presentationCredentials,
-  presentationMessages,
-  presentationVerifiers,
-  presentations,
-  vcClaims,
-} from '../db/schema';
+import type { CredentialInsert, CredentialsRepository } from 'src/credentials';
+import type { EncryptedCredentialsRepository } from 'src/encrypted-credentials';
+import type { MessagesRepository, MessageInsert, MessageRecord } from 'src/messages';
+import type { PresentationCredentialsRepository } from 'src/presentation-credentials';
+import type { CredentialMessagesRepository } from 'src/credential-messages';
+import type { PresentationMessagesRepository } from 'src/presentation-messages';
+import type { PresentationVerifiersRepository } from 'src/presentation-verifiers';
+import type { PresentationInsert, PresentationsRepository } from 'src/presentations';
+import type { VcClaimsRepository } from 'src/vc-claims';
 import { getRequestContext } from '../request-context';
 import { encryptString } from './encryption';
 
 export type SaveVerifiableCredentialArgs = {
   verifiableCredential: VerifiableCredential;
 };
-
-type MessageRow = typeof messages.$inferSelect;
 
 type DataStoreMethods = {
   dataStoreSaveMessage: (args: IDataStoreSaveMessageArgs) => Promise<string>;
@@ -56,9 +48,7 @@ type DataStoreMethods = {
 const ensureArray = <T>(value: T | T[] | undefined): T[] =>
   value === undefined ? [] : Array.isArray(value) ? value : [value];
 
-const first = <T>(rows: T[]): T | undefined => rows[0];
-
-const messageToRow = (message: IMessage): InferInsertModel<typeof messages> => ({
+const messageToRow = (message: IMessage): MessageInsert => ({
   id: message.id,
   type: message.type,
   raw: message.raw ?? null,
@@ -75,7 +65,7 @@ const messageToRow = (message: IMessage): InferInsertModel<typeof messages> => (
 });
 
 const rowToMessage = (
-  row: MessageRow,
+  row: MessageRecord,
   linkedCredentials: VerifiableCredential[],
   linkedPresentations: VerifiablePresentation[],
 ): IMessage => ({
@@ -126,10 +116,8 @@ const generateDeterministicId = () =>
 
 export class DataStore implements IAgentPlugin {
   readonly methods: DataStoreMethods;
-  private readonly db: Database;
 
   constructor() {
-    this.db = getDb();
     this.methods = {
       dataStoreSaveMessage: this.dataStoreSaveMessage.bind(this),
       dataStoreGetMessage: this.dataStoreGetMessage.bind(this),
@@ -143,59 +131,34 @@ export class DataStore implements IAgentPlugin {
 
   private async dataStoreSaveMessage({ message }: IDataStoreSaveMessageArgs): Promise<string> {
     const row = messageToRow(message);
-    const { id: _messageId, ...update } = row;
-
-    await this.db.insert(messages).values(row).onConflictDoUpdate({
-      target: messages.id,
-      set: update,
-    });
+    await this.getMessagesRepository().saveMessage(row);
 
     return message.id;
   }
 
   private async dataStoreGetMessage({ id }: IDataStoreGetMessageArgs): Promise<IMessage> {
-    const row = first(await this.db.select().from(messages).where(eq(messages.id, id)).limit(1));
+    const row = await this.getMessagesRepository().findMessageById(id);
 
     if (!row) throw new Error('Message not found.');
 
-    const credentialHashes = await this.db
-      .select({ hash: credentialMessages.credentialHash })
-      .from(credentialMessages)
-      .where(eq(credentialMessages.messageId, row.id));
+    const credentialHashes =
+      await this.getCredentialMessagesRepository().findCredentialHashesByMessageId(row.id);
 
-    const presentationHashes = await this.db
-      .select({ hash: presentationMessages.presentationHash })
-      .from(presentationMessages)
-      .where(eq(presentationMessages.messageId, row.id));
+    const presentationHashes =
+      await this.getPresentationMessagesRepository().findPresentationHashesByMessageId(row.id);
 
-    const credentialsList = credentialHashes.length
-      ? await this.db
-          .select({ raw: credentials.raw })
-          .from(credentials)
-          .where(
-            inArray(
-              credentials.hash,
-              credentialHashes.map((c) => c.hash),
-            ),
-          )
+    const credentialRows = credentialHashes.length
+      ? await this.getCredentialsRepository().findCredentialsByHashes(credentialHashes)
       : [];
 
-    const presentationsList = presentationHashes.length
-      ? await this.db
-          .select({ raw: presentations.raw })
-          .from(presentations)
-          .where(
-            inArray(
-              presentations.hash,
-              presentationHashes.map((p) => p.hash),
-            ),
-          )
+    const presentationRows = presentationHashes.length
+      ? await this.getPresentationsRepository().findPresentationsByHashes(presentationHashes)
       : [];
 
     return rowToMessage(
       row,
-      credentialsList.map((item) => item.raw as VerifiableCredential),
-      presentationsList.map((item) => item.raw as VerifiablePresentation),
+      credentialRows.map((item) => item.raw as VerifiableCredential),
+      presentationRows.map((item) => item.raw as VerifiablePresentation),
     );
   }
 
@@ -204,9 +167,9 @@ export class DataStore implements IAgentPlugin {
   }: SaveVerifiableCredentialArgs): Promise<string> {
     const hash = computeEntryHash(verifiableCredential);
     const credentialId = verifiableCredential.id ?? generateDeterministicId();
-    const { tenantId, organizationId } = getTenantContext();
+    const { organizationId } = getTenantContext();
 
-    const values: InferInsertModel<typeof credentials> = {
+    const values: CredentialInsert = {
       hash,
       id: credentialId,
       organizationId,
@@ -220,35 +183,17 @@ export class DataStore implements IAgentPlugin {
       subjectId: credentialSubjectId(verifiableCredential) ?? null,
       type: ensureArray(verifiableCredential.type),
     };
-    const { hash: _hash, ...update } = values;
-
-    await this.db.insert(credentials).values(values).onConflictDoUpdate({
-      target: credentials.hash,
-      set: update,
-    });
+    await this.getCredentialsRepository().saveCredential(values);
 
     const encrypted = encryptString(JSON.stringify(verifiableCredential));
-
-    await this.db
-      .insert(encryptedCredentials)
-      .values({
-        credentialId,
-        cipherText: encrypted.cipherText,
-        iv: encrypted.iv,
-        tag: encrypted.tag,
-        key: encrypted.key,
-        algorithm: 'AES_GCM',
-      })
-      .onConflictDoUpdate({
-        target: encryptedCredentials.credentialId,
-        set: {
-          cipherText: encrypted.cipherText,
-          iv: encrypted.iv,
-          tag: encrypted.tag,
-          key: encrypted.key,
-          algorithm: 'AES_GCM',
-        },
-      });
+    await this.getEncryptedCredentialsRepository().upsertEncryptedCredential({
+      credentialId,
+      cipherText: encrypted.cipherText,
+      iv: encrypted.iv,
+      tag: encrypted.tag,
+      key: encrypted.key,
+      algorithm: 'AES_GCM',
+    });
 
     return hash;
   }
@@ -256,13 +201,7 @@ export class DataStore implements IAgentPlugin {
   private async dataStoreGetVerifiableCredential({
     hash,
   }: IDataStoreGetVerifiableCredentialArgs): Promise<VerifiableCredential> {
-    const record = first(
-      await this.db
-        .select({ raw: credentials.raw })
-        .from(credentials)
-        .where(eq(credentials.hash, hash))
-        .limit(1),
-    );
+    const record = await this.getCredentialsRepository().findCredentialByHash(hash);
 
     if (!record) throw new Error('Verifiable credential not found.');
 
@@ -272,25 +211,15 @@ export class DataStore implements IAgentPlugin {
   private async dataStoreDeleteVerifiableCredential({
     hash,
   }: IDataStoreDeleteVerifiableCredentialArgs): Promise<boolean> {
-    const credential = first(
-      await this.db
-        .select({ id: credentials.id })
-        .from(credentials)
-        .where(eq(credentials.hash, hash))
-        .limit(1),
-    );
+    const credential = await this.getCredentialsRepository().findCredentialByHash(hash);
 
     if (!credential) return false;
 
-    await this.db.delete(vcClaims).where(eq(vcClaims.credentialId, hash));
-    await this.db.delete(credentialMessages).where(eq(credentialMessages.credentialHash, hash));
-    await this.db
-      .delete(presentationCredentials)
-      .where(eq(presentationCredentials.credentialHash, hash));
-    await this.db
-      .delete(encryptedCredentials)
-      .where(eq(encryptedCredentials.credentialId, credential.id));
-    await this.db.delete(credentials).where(eq(credentials.hash, hash));
+    await this.getVcClaimsRepository().deleteByCredentialHash(hash);
+    await this.getCredentialMessagesRepository().deleteByCredentialHash(hash);
+    await this.getPresentationCredentialsRepository().deleteByCredentialHash(hash);
+    await this.getEncryptedCredentialsRepository().deleteByCredentialId(credential.id);
+    await this.getCredentialsRepository().deleteCredentialByHash(hash);
 
     return true;
   }
@@ -306,7 +235,7 @@ export class DataStore implements IAgentPlugin {
     const { tenantId } = getTenantContext();
     const holderDid = verifiablePresentation.holder;
 
-    const values: InferInsertModel<typeof presentations> = {
+    const values: PresentationInsert = {
       hash,
       tenantId,
       raw: verifiablePresentation as unknown,
@@ -317,29 +246,13 @@ export class DataStore implements IAgentPlugin {
       issuanceDate: verifiablePresentation.issuanceDate ?? '',
       expirationDate: verifiablePresentation.expirationDate ?? null,
     };
-    const { hash: _presentationHash, ...update } = values;
-
-    await this.db.insert(presentations).values(values).onConflictDoUpdate({
-      target: presentations.hash,
-      set: update,
-    });
-
-    await this.db
-      .delete(presentationVerifiers)
-      .where(eq(presentationVerifiers.presentationHash, hash));
+    await this.getPresentationsRepository().savePresentation(values);
 
     const verifiers = ensureArray(verifiablePresentation.verifier).filter(
       (item): item is string => typeof item === 'string',
     );
 
-    if (verifiers.length) {
-      await this.db.insert(presentationVerifiers).values(
-        verifiers.map((did) => ({
-          presentationHash: hash,
-          verifierDid: did,
-        })),
-      );
-    }
+    await this.getPresentationVerifiersRepository().replaceVerifiers(hash, verifiers);
 
     return hash;
   }
@@ -347,17 +260,56 @@ export class DataStore implements IAgentPlugin {
   private async dataStoreGetVerifiablePresentation({
     hash,
   }: IDataStoreGetVerifiablePresentationArgs): Promise<VerifiablePresentation> {
-    const record = first(
-      await this.db
-        .select({ raw: presentations.raw })
-        .from(presentations)
-        .where(eq(presentations.hash, hash))
-        .limit(1),
-    );
+    const record = await this.getPresentationsRepository().findPresentationByHash(hash);
 
     if (!record) throw new Error('Verifiable presentation not found.');
 
     return record.raw as VerifiablePresentation;
+  }
+
+  private getMessagesRepository(): MessagesRepository {
+    const { messagesRepository } = getRequestContext();
+    return messagesRepository;
+  }
+
+  private getCredentialMessagesRepository(): CredentialMessagesRepository {
+    const { credentialMessagesRepository } = getRequestContext();
+    return credentialMessagesRepository;
+  }
+
+  private getCredentialsRepository(): CredentialsRepository {
+    const { credentialsRepository } = getRequestContext();
+    return credentialsRepository;
+  }
+
+  private getEncryptedCredentialsRepository(): EncryptedCredentialsRepository {
+    const { encryptedCredentialsRepository } = getRequestContext();
+    return encryptedCredentialsRepository;
+  }
+
+  private getPresentationCredentialsRepository(): PresentationCredentialsRepository {
+    const { presentationCredentialsRepository } = getRequestContext();
+    return presentationCredentialsRepository;
+  }
+
+  private getPresentationMessagesRepository(): PresentationMessagesRepository {
+    const { presentationMessagesRepository } = getRequestContext();
+    return presentationMessagesRepository;
+  }
+
+  private getPresentationVerifiersRepository(): PresentationVerifiersRepository {
+    const { presentationVerifiersRepository } = getRequestContext();
+    return presentationVerifiersRepository;
+  }
+
+  private getPresentationsRepository(): PresentationsRepository {
+    const { presentationsRepository } = getRequestContext();
+    return presentationsRepository;
+  }
+
+  private getVcClaimsRepository(): VcClaimsRepository {
+    const { vcClaimsRepository } = getRequestContext();
+    return vcClaimsRepository;
   }
 }
 

@@ -1,5 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { getIdentifierById } from './identifiers.repository';
+import { getRequestContext } from 'src/request-context';
 import { createIdentifierRoute, getIdentifierRoute } from './identifiers.routes';
 import { createIdentifier } from './identifiers.service';
 
@@ -12,7 +12,8 @@ app.openapi(createIdentifierRoute, async (c) => {
 
 app.openapi(getIdentifierRoute, async (c) => {
   const { id } = c.req.valid('param');
-  const identifier = await getIdentifierById(id);
+  const { identifiersRepository } = getRequestContext();
+  const identifier = await identifiersRepository.findIdentifier({ id });
 
   if (!identifier) return c.json({ error: 'Identifier not found' }, 404);
 

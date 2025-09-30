@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { contextStorage } from 'hono/context-storage';
 import { describe, expect, it } from 'vitest';
-import { getRequestContext, requestContext } from './request-context';
+import { authMiddleware, getRequestContext } from './request-context';
 
 const createApp = () => {
   const app = new Hono();
   app.use(contextStorage());
-  app.use('*', requestContext);
+  app.use('*', authMiddleware);
   app.get('/', (c) => {
     const { auth } = getRequestContext();
     return c.json(auth);
