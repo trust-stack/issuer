@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "openapi:generate": "tsx scripts/generate-openapi.ts",
-    "build": "tsc",
-    "test": "vitest run --config vitest.config.mts",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest watch --config vitest.config.mts",
     "test:e2e": "vitest watch --config vitest.e2e.config.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

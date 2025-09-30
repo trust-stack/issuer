@@ -11,8 +11,10 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "paths": {
+      "src/*": ["src/*"]
+    },
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "e2e/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src/**/*.ts", "e2e/**/*.ts"]
 }
