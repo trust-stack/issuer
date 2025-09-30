@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { resolve } from 'node:path';
-import * as schema from 'src/db/schema';
+import { App, createApp } from 'src';
 
 const dbRef = vi.hoisted(() => ({ current: undefined as ReturnType<typeof drizzle> | undefined }));
 
@@ -15,18 +15,21 @@ vi.mock('src/db/instance', () => ({
   },
 }));
 
-import app from 'src';
+import * as schema from 'src/db/schema';
 import { resetData } from './db';
 
 let sqlite: Database.Database;
 
 describe('Identifiers (e2e)', () => {
+  let app: App;
   beforeAll(async () => {
     sqlite = new Database(':memory:');
     dbRef.current = drizzle(sqlite, { schema });
     await migrate(dbRef.current, {
       migrationsFolder: resolve(process.cwd(), 'drizzle'),
     });
+
+    app = createApp();
   });
 
   afterAll(() => {

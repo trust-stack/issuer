@@ -1,8 +1,8 @@
+import { getRequestContext } from 'src/request-context';
 import { uuid } from 'src/utils';
 import z from 'zod';
 import { getAgent } from '../agent';
 import { CreateIdentifierDto, IdentifierDto, toIdentifierDto } from './identifiers.dto';
-import { getIdentifierByAlias } from './identifiers.repository';
 import { constructAlias } from './identifiers.utils';
 
 export const Identifier = z.object({
@@ -20,7 +20,7 @@ export type Identifier = z.infer<typeof Identifier>;
  */
 export async function createIdentifier(dto: CreateIdentifierDto): Promise<IdentifierDto> {
   const agent = getAgent();
-
+  const { identifiersRepository } = getRequestContext();
   const alias = constructAlias(dto.alias || uuid());
 
   const identifier = await agent.didManagerCreate({
@@ -28,7 +28,7 @@ export async function createIdentifier(dto: CreateIdentifierDto): Promise<Identi
     provider: 'did:web',
   });
 
-  return getIdentifierByAlias(identifier.alias!).then((identifier) => {
+  return identifiersRepository.findIdentifier({ alias: identifier.alias! }).then((identifier) => {
     if (!identifier) throw new Error('Identifier not found');
     return toIdentifierDto(identifier);
   });

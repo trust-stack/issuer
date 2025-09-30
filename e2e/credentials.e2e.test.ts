@@ -15,18 +15,21 @@ vi.mock('src/db/instance', () => ({
   },
 }));
 
-import app from 'src';
+import { App, createApp } from 'src';
 import { resetData } from './db';
 
 let sqlite: Database.Database;
 
 describe('Credentials (e2e)', () => {
+  let app: App;
   beforeAll(async () => {
     sqlite = new Database(':memory:');
     dbRef.current = drizzle(sqlite, { schema });
     await migrate(dbRef.current, {
       migrationsFolder: resolve(process.cwd(), 'drizzle'),
     });
+
+    app = createApp();
   });
 
   afterAll(() => {
