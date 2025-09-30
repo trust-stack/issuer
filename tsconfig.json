@@ -3,15 +3,18 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "ESNext",
-    "rootDir": "src",
+    "rootDir": "./",
+    "baseUrl": "./",
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "paths": {
+      "src/*": ["src/*"]
+    },
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src/**/*.ts", "e2e/**/*.ts"]
 }

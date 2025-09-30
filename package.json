@@ -5,27 +5,30 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "pnpm run test:unit && pnpm run test:e2e",
     "openapi:generate": "tsx scripts/generate-openapi.ts",
-    "build": "tsc",
-    "test:unit": "vitest run --config vitest.config.mts",
-    "test:e2e": "vitest run --config vitest.e2e.config.mts",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest watch --config vitest.config.mts",
+    "test:e2e": "vitest watch --config vitest.e2e.config.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "drizzle:generate": "drizzle-kit generate",
+    "drizzle:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.5.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4",
-    "prettier": "^3.3.3",
+    "better-sqlite3": "^12.4.1",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
-    "tsx": "^4.15.1"
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.15.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@hono/standard-validator": "^0.1.5",
@@ -43,6 +46,7 @@
     "did-resolver": "^4.1.0",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.5",
+    "drizzle-zod": "^0.8.3",
     "ethr-did-resolver": "^11.0.5",
     "hono": "^4.9.9",
     "hono-openapi": "^1.1.0",
