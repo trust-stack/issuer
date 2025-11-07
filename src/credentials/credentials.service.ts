@@ -2,7 +2,7 @@ import { VerifiableCredential } from '@veramo/core';
 import { getAgent } from 'src/agent';
 import { Identifier } from 'src/identifiers/identifiers.service';
 import { getRequestContext } from 'src/request-context';
-import { CreateCredentialDto } from './credentials.dto';
+import { CreateCredentialDto, CredentialDto, toCredentialDto } from './credentials.dto';
 
 /**
  * Create a credential
@@ -37,4 +37,44 @@ export async function createCredential(dto: CreateCredentialDto): Promise<Verifi
   });
 
   return credential;
+}
+
+export type GetCredentialParams = {
+  id: string;
+};
+
+export async function getCredential({ id }: GetCredentialParams): Promise<CredentialDto | null> {
+  const { credentialsRepository } = getRequestContext();
+  const credential = await credentialsRepository.findCredentialById(id);
+
+  if (!credential) return null;
+
+  return toCredentialDto(credential);
+}
+
+export type ListCredentialsParams = {
+  offset?: number;
+  limit?: number;
+  issuerDid?: string;
+};
+
+export async function listCredentials(
+  params: ListCredentialsParams = {},
+): Promise<CredentialDto[]> {
+  const { credentialsRepository } = getRequestContext();
+  const credentials = await credentialsRepository.listCredentials({
+    offset: params.offset,
+    limit: params.limit,
+    issuerDid: params.issuerDid,
+  });
+  return credentials.map(toCredentialDto);
+}
+
+export type DeleteCredentialParams = {
+  id: string;
+};
+
+export async function deleteCredential({ id }: DeleteCredentialParams): Promise<void> {
+  const { credentialsRepository } = getRequestContext();
+  await credentialsRepository.deleteCredentialById(id);
 }

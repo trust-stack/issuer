@@ -1,6 +1,8 @@
+import type { SQL } from 'drizzle-orm';
 import { and, eq, inArray } from 'drizzle-orm';
 import type {
   CredentialInsert,
+  CredentialListFilter,
   CredentialRecord,
   CredentialsRepository,
 } from 'src/credentials/credentials.repository';
@@ -52,11 +54,56 @@ export class CredentialsRepositorySqlite implements CredentialsRepository {
       );
   }
 
+  async findCredentialById(id: string): Promise<CredentialRecord | null> {
+    const { auth } = getRequestContext();
+
+    const [result] = await this.db
+      .select()
+      .from(credentials)
+      .where(and(eq(credentials.id, id), eq(credentials.organizationId, auth.organizationId)))
+      .limit(1);
+
+    return result ?? null;
+  }
+
+  async listCredentials(filter: CredentialListFilter = {}): Promise<CredentialRecord[]> {
+    const { auth } = getRequestContext();
+
+    const conditions: SQL[] = [eq(credentials.organizationId, auth.organizationId)];
+
+    if (filter.issuerDid) {
+      conditions.push(eq(credentials.issuerId, filter.issuerDid));
+    }
+
+    const whereClause = conditions.reduce<SQL | undefined>((acc, condition) => {
+      return acc ? and(acc, condition) : condition;
+    }, undefined);
+
+    if (!whereClause) {
+      throw new Error('No conditions provided for credential query');
+    }
+
+    return this.db
+      .select()
+      .from(credentials)
+      .where(whereClause)
+      .offset(filter.offset ?? 0)
+      .limit(filter.limit ?? 100);
+  }
+
   async deleteCredentialByHash(hash: string): Promise<void> {
     const { auth } = getRequestContext();
 
     await this.db
       .delete(credentials)
       .where(and(eq(credentials.hash, hash), eq(credentials.organizationId, auth.organizationId)));
+  }
+
+  async deleteCredentialById(id: string): Promise<void> {
+    const { auth } = getRequestContext();
+
+    await this.db
+      .delete(credentials)
+      .where(and(eq(credentials.id, id), eq(credentials.organizationId, auth.organizationId)));
   }
 }
