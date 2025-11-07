@@ -173,9 +173,42 @@ export class IdentifiersRepositorySqlite implements IdentifiersRepository {
         cryptoKeys: true,
         services: true,
       },
+      offset: filter.offset,
+      limit: filter.limit,
     });
 
     return results.map((result) => this.toIdentifierDetails(result));
+  }
+
+  async listIdentifiers(filter: IdentifierListFilter = {}): Promise<Identifier[]> {
+    const { auth } = getRequestContext();
+
+    const conditions = [eq(identifiers.organizationId, auth.organizationId)];
+
+    if (filter.alias) {
+      conditions.push(eq(identifiers.alias, filter.alias));
+    }
+
+    if (filter.provider) {
+      conditions.push(eq(identifiers.provider, filter.provider));
+    }
+
+    const whereClause = conditions.reduce<SQL | undefined>((acc, condition) => {
+      return acc ? and(acc, condition) : condition;
+    }, undefined);
+
+    if (!whereClause) {
+      throw new Error('No conditions provided for identifier query');
+    }
+
+    const results = await this.db
+      .select()
+      .from(identifiers)
+      .where(whereClause)
+      .offset(filter.offset ?? 0)
+      .limit(filter.limit ?? 100);
+
+    return results.map((result) => this.toIdentifier(result));
   }
 
   private toIdentifier(identifier: DbIdentifier): Identifier {

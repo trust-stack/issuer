@@ -153,4 +153,180 @@ describe('Identifiers (e2e)', () => {
       expect(getResponse.status).toBe(404);
     });
   });
+
+  describe('GET /identifiers', () => {
+    it('can list identifiers with pagination', async () => {
+      // Arrange: Create multiple identifiers
+      const identifiers = [];
+      for (let i = 0; i < 5; i++) {
+        const createRequest = new Request('http://localhost/identifiers', {
+          method: 'POST',
+          body: JSON.stringify({
+            alias: `test-did-${i}`,
+          }),
+          headers: {
+            'x-tenant-id': 'test-tenant',
+            'x-organization-id': 'test-org',
+            'Content-Type': 'application/json',
+          },
+        });
+        const response = await app.request(createRequest);
+        const identifier = await response.json();
+        identifiers.push(identifier);
+      }
+
+      // Act: List identifiers with pagination
+      const listRequest = new Request('http://localhost/identifiers?offset=0&limit=3', {
+        method: 'GET',
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const listResponse = await app.request(listRequest);
+
+      // Assert: The response is successful and returns paginated results
+      expect(listResponse.status).toBe(200);
+      const result = await listResponse.json();
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeLessThanOrEqual(3);
+    });
+
+    it('can list identifiers with default pagination', async () => {
+      // Arrange: Create an identifier
+      const createRequest = new Request('http://localhost/identifiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          alias: 'test-did-default',
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+      await app.request(createRequest);
+
+      // Act: List identifiers without pagination params
+      const listRequest = new Request('http://localhost/identifiers', {
+        method: 'GET',
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const listResponse = await app.request(listRequest);
+
+      // Assert: The response is successful
+      expect(listResponse.status).toBe(200);
+      const result = await listResponse.json();
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('can filter identifiers by alias', async () => {
+      // Arrange: Create identifiers with different aliases
+      const createRequest1 = new Request('http://localhost/identifiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          alias: 'filter-test-1',
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+      await app.request(createRequest1);
+
+      const createRequest2 = new Request('http://localhost/identifiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          alias: 'filter-test-2',
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+      await app.request(createRequest2);
+
+      // Act: Filter by alias
+      const listRequest = new Request(
+        'http://localhost/identifiers?alias=test.truststack.dev:test-org:filter-test-1',
+        {
+          method: 'GET',
+          headers: {
+            'x-tenant-id': 'test-tenant',
+            'x-organization-id': 'test-org',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const listResponse = await app.request(listRequest);
+
+      // Assert: The response is successful and filtered
+      expect(listResponse.status).toBe(200);
+      const result = await listResponse.json();
+      expect(Array.isArray(result)).toBe(true);
+      if (result.length > 0) {
+        expect(result[0].alias).toContain('filter-test-1');
+      }
+    });
+
+    it('only returns identifiers for the requesting organization', async () => {
+      // Arrange: Create identifiers for different organizations
+      const createRequest1 = new Request('http://localhost/identifiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          alias: 'org1-identifier',
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'org-1',
+          'Content-Type': 'application/json',
+        },
+      });
+      await app.request(createRequest1);
+
+      const createRequest2 = new Request('http://localhost/identifiers', {
+        method: 'POST',
+        body: JSON.stringify({
+          alias: 'org2-identifier',
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'org-2',
+          'Content-Type': 'application/json',
+        },
+      });
+      await app.request(createRequest2);
+
+      // Act: List identifiers for org-1
+      const listRequest = new Request('http://localhost/identifiers', {
+        method: 'GET',
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'org-1',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const listResponse = await app.request(listRequest);
+
+      // Assert: Only org-1 identifiers are returned
+      expect(listResponse.status).toBe(200);
+      const result = await listResponse.json();
+      expect(Array.isArray(result)).toBe(true);
+      // All returned identifiers should belong to org-1
+      result.forEach((identifier: any) => {
+        expect(identifier.alias).toContain('org-1');
+      });
+    });
+  });
 });

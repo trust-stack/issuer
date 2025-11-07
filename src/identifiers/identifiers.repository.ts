@@ -7,6 +7,8 @@ export type IdentifierLookup = { id: string } | { did: string } | { alias: strin
 export type IdentifierListFilter = {
   alias?: string;
   provider?: string;
+  offset?: number;
+  limit?: number;
 };
 
 export interface IdentifiersRepository {
@@ -16,4 +18,5 @@ export interface IdentifiersRepository {
   findIdentifierDetails(lookup: IdentifierLookup): Promise<IIdentifier | null>;
   deleteIdentifierByDid(did: string): Promise<void>;
   listIdentifierDetails(filter?: IdentifierListFilter): Promise<IIdentifier[]>;
+  listIdentifiers(filter?: IdentifierListFilter): Promise<Identifier[]>;
 }
