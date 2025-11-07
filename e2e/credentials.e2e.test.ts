@@ -50,7 +50,7 @@ describe('Credentials (e2e)', () => {
       );
     });
 
-    it('can create a credential', async () => {
+    it('can create a credential with issuerDid', async () => {
       // Arrange: Create a request to create a credential
       const request = new Request('http://localhost/credentials', {
         method: 'POST',
@@ -74,6 +74,94 @@ describe('Credentials (e2e)', () => {
 
       // Assert: The response is successful
       expect(response.status).toBe(201);
+    });
+
+    it('can create a credential without issuerDid when organization has exactly one identifier', async () => {
+      // Arrange: Create a request to create a credential without issuerDid
+      const request = new Request('http://localhost/credentials', {
+        method: 'POST',
+        body: JSON.stringify({
+          credential: {
+            name: 'test-credential-default',
+          },
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Act: Send the request
+      const response = await app.request(request);
+
+      // Assert: The response is successful
+      expect(response.status).toBe(201);
+    });
+
+    it('should fail when issuerDid is not provided and organization has no identifiers', async () => {
+      // Arrange: Create a request without issuerDid for an organization with no identifiers
+      const request = new Request('http://localhost/credentials', {
+        method: 'POST',
+        body: JSON.stringify({
+          credential: {
+            name: 'test-credential',
+          },
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'empty-org',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Act: Send the request
+      const response = await app.request(request);
+
+      // Assert: The response is an error
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.message).toContain('No identifiers found for organization');
+    });
+
+    it('should fail when issuerDid is not provided and organization has multiple identifiers', async () => {
+      // Arrange: Create a second identifier for the organization
+      await app.request(
+        new Request('http://localhost/identifiers', {
+          method: 'POST',
+          body: JSON.stringify({
+            alias: 'test-did-2',
+          }),
+          headers: {
+            'x-tenant-id': 'test-tenant',
+            'x-organization-id': 'test-org',
+            'Content-Type': 'application/json',
+          },
+        }),
+      );
+
+      // Arrange: Create a request without issuerDid
+      const request = new Request('http://localhost/credentials', {
+        method: 'POST',
+        body: JSON.stringify({
+          credential: {
+            name: 'test-credential',
+          },
+        }),
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Act: Send the request
+      const response = await app.request(request);
+
+      // Assert: The response is an error
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body.message).toContain('Multiple identifiers found for organization');
     });
   });
 });
