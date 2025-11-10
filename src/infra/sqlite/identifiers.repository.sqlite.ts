@@ -9,6 +9,7 @@ import {
   IdentifierLookup,
   IdentifiersRepository,
 } from 'src/identifiers/identifiers.repository';
+import { constructDefaultDid } from 'src/identifiers/identifiers.utils';
 import { getRequestContext } from 'src/request-context';
 import { SqliteDb } from './sqlite-drizzle';
 
@@ -46,6 +47,19 @@ export class IdentifiersRepositorySqlite implements IdentifiersRepository {
       .set(dto)
       .where(and(eq(identifiers.did, did), eq(identifiers.organizationId, auth.organizationId)));
 
+    if (!result) return null;
+    return this.toIdentifier(result);
+  }
+
+  async findDefaultIdentifier(): Promise<Identifier | null> {
+    const { auth } = getRequestContext();
+
+    const did = constructDefaultDid();
+
+    const [result] = await this.db
+      .select()
+      .from(identifiers)
+      .where(and(eq(identifiers.organizationId, auth.organizationId), eq(identifiers.did, did)));
     if (!result) return null;
     return this.toIdentifier(result);
   }

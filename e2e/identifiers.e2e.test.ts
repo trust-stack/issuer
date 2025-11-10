@@ -154,6 +154,132 @@ describe('Identifiers (e2e)', () => {
     });
   });
 
+  describe('GET /identifiers/default', () => {
+    it('creates a default identifier when none exists', async () => {
+      // Arrange: Create a request to get the default identifier
+      const request = new Request('http://localhost/identifiers/default?organizationId=test-org', {
+        method: 'GET',
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'test-org',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Act: Send the request
+      const response = await app.request(request);
+
+      // Assert: The response is successful and creates a new identifier
+      expect(response.status).toBe(201);
+      const identifier = await response.json();
+      expect(identifier).toEqual(
+        expect.objectContaining({
+          did: 'did:web:test.truststack.dev:test-org',
+        }),
+      );
+      expect(identifier.id).toBeDefined();
+    });
+
+    it('returns existing default identifier when it already exists', async () => {
+      // Arrange: Create a request to get the default identifier (first call creates it)
+      const firstRequest = new Request(
+        'http://localhost/identifiers/default?organizationId=test-org',
+        {
+          method: 'GET',
+          headers: {
+            'x-tenant-id': 'test-tenant',
+            'x-organization-id': 'test-org',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const firstResponse = await app.request(firstRequest);
+      expect(firstResponse.status).toBe(201);
+      const firstIdentifier = await firstResponse.json();
+
+      // Act: Request the default identifier again
+      const secondRequest = new Request(
+        'http://localhost/identifiers/default?organizationId=test-org',
+        {
+          method: 'GET',
+          headers: {
+            'x-tenant-id': 'test-tenant',
+            'x-organization-id': 'test-org',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const secondResponse = await app.request(secondRequest);
+
+      // Assert: The response returns the existing identifier with status 200
+      expect(secondResponse.status).toBe(200);
+      const secondIdentifier = await secondResponse.json();
+      expect(secondIdentifier.id).toBe(firstIdentifier.id);
+      expect(secondIdentifier.did).toBe(firstIdentifier.did);
+      expect(secondIdentifier.did).toBe('did:web:test.truststack.dev:test-org');
+    });
+
+    it('creates different default identifiers for different organizations', async () => {
+      // Arrange: Create default identifier for org-1
+      const org1Request = new Request('http://localhost/identifiers/default?organizationId=org-1', {
+        method: 'GET',
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'org-1',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const org1Response = await app.request(org1Request);
+      expect(org1Response.status).toBe(201);
+      const org1Identifier = await org1Response.json();
+
+      // Arrange: Create default identifier for org-2
+      const org2Request = new Request('http://localhost/identifiers/default?organizationId=org-2', {
+        method: 'GET',
+        headers: {
+          'x-tenant-id': 'test-tenant',
+          'x-organization-id': 'org-2',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const org2Response = await app.request(org2Request);
+      expect(org2Response.status).toBe(201);
+      const org2Identifier = await org2Response.json();
+
+      // Assert: The identifiers are different and have correct DID format
+      expect(org1Identifier.did).toBe('did:web:test.truststack.dev:org-1');
+      expect(org2Identifier.did).toBe('did:web:test.truststack.dev:org-2');
+      expect(org1Identifier.id).not.toBe(org2Identifier.id);
+    });
+
+    it('verifies the default DID format matches did:web:WEB_DID_DOMAIN:organizationId', async () => {
+      // Arrange: Create a request to get the default identifier
+      const request = new Request(
+        'http://localhost/identifiers/default?organizationId=my-org-123',
+        {
+          method: 'GET',
+          headers: {
+            'x-tenant-id': 'test-tenant',
+            'x-organization-id': 'my-org-123',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      // Act: Send the request
+      const response = await app.request(request);
+
+      // Assert: The response has the correct DID format
+      expect(response.status).toBe(201);
+      const identifier = await response.json();
+      expect(identifier.did).toBe('did:web:test.truststack.dev:my-org-123');
+    });
+  });
+
   describe('GET /identifiers', () => {
     it('can list identifiers with pagination', async () => {
       // Arrange: Create multiple identifiers
