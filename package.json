@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "openapi:generate": "tsx scripts/generate-openapi.ts",
+    "openapi:generate": "WEB_DID_DOMAIN=test.truststack.dev tsx scripts/generate-openapi.ts",
     "build": "tsup --config tsup.config.ts",
     "test": "vitest watch --config vitest.config.mts",
     "test:e2e": "vitest watch --config vitest.e2e.config.mts",

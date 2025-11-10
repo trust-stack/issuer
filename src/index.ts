@@ -4,6 +4,7 @@ import { CredentialMessagesRepository } from './credential-messages';
 import { CredentialsRepository } from './credentials';
 import credentials from './credentials/credentials.handler';
 import { EncryptedCredentialsRepository } from './encrypted-credentials';
+import { getEnv } from './env';
 import { IdentifiersRepository } from './identifiers';
 import identifiers from './identifiers/identifiers.handler';
 import { KeysRepository } from './keys';
@@ -13,6 +14,8 @@ import { PresentationMessagesRepository } from './presentation-messages';
 import { PresentationVerifiersRepository } from './presentation-verifiers';
 import { PresentationsRepository } from './presentations';
 import { PrivateKeyRepository } from './private-key';
+import { registerPublicCredentialRoute } from './public/credentials.routes';
+import { registerDidRoute } from './public/did.routes';
 import { authMiddleware, dependencyMiddlewareFactory } from './request-context';
 import { VcClaimsRepository } from './vc-claims';
 
@@ -38,6 +41,12 @@ export function createApp(options: AppOptions) {
   app.get('/health', (c) => c.json({ status: 'ok' }));
 
   app.use(contextStorage());
+
+  // Public routes (no auth required) - MUST be registered BEFORE authMiddleware
+  registerDidRoute(app, options.credentialsRepository, getEnv().WEB_DID_DOMAIN);
+  registerPublicCredentialRoute(app, options.credentialsRepository);
+
+  // Protected routes (require auth)
   app.use(authMiddleware);
   app.use(dependencyMiddlewareFactory(options));
 

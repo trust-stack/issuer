@@ -11,7 +11,7 @@ import { getRequestContext } from 'src/request-context';
 import { SqliteDb } from './sqlite-drizzle';
 
 export class CredentialsRepositorySqlite implements CredentialsRepository {
-  constructor(private db: SqliteDb) {}
+  constructor(readonly db: SqliteDb) {}
 
   async saveCredential(credential: CredentialInsert): Promise<void> {
     const { auth } = getRequestContext();
