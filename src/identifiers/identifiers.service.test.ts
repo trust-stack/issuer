@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => {
     findIdentifierDetails: vi.fn(),
     deleteIdentifierByDid: vi.fn(),
     listIdentifierDetails: vi.fn(),
+    listIdentifiers: vi.fn(),
   };
   const keysRepository = {
     saveKey: vi.fn(),
@@ -105,11 +106,11 @@ vi.mock('src/request-context', () => ({
   getRequestContext: mocks.getRequestContextMock,
 }));
 
-import { getAgent } from '../agent';
-import { uuid } from 'src/utils';
 import { getRequestContext } from 'src/request-context';
+import { uuid } from 'src/utils';
+import { getAgent } from '../agent';
 import { toIdentifierDto } from './identifiers.dto';
-import { createIdentifier } from './identifiers.service';
+import { createIdentifier, listIdentifiers } from './identifiers.service';
 
 describe('createIdentifier', () => {
   beforeEach(() => {
@@ -207,5 +208,112 @@ describe('createIdentifier', () => {
     expect(mocks.identifiersRepository.findIdentifier).toHaveBeenCalledWith({
       alias: 'missing-alias',
     });
+  });
+});
+
+describe('listIdentifiers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getRequestContextMock.mockReturnValue({
+      auth: {
+        organizationId: 'org-123',
+        tenantId: 'tenant-456',
+        userId: 'user-789',
+      },
+      identifiersRepository: mocks.identifiersRepository,
+      keysRepository: mocks.keysRepository,
+      credentialMessagesRepository: mocks.credentialMessagesRepository,
+      credentialsRepository: mocks.credentialsRepository,
+      encryptedCredentialsRepository: mocks.encryptedCredentialsRepository,
+      presentationCredentialsRepository: mocks.presentationCredentialsRepository,
+      presentationMessagesRepository: mocks.presentationMessagesRepository,
+      presentationVerifiersRepository: mocks.presentationVerifiersRepository,
+      presentationsRepository: mocks.presentationsRepository,
+      messagesRepository: mocks.messagesRepository,
+      privateKeyRepository: mocks.privateKeyRepository,
+      vcClaimsRepository: mocks.vcClaimsRepository,
+    });
+  });
+
+  it('lists identifiers with default pagination', async () => {
+    const mockIdentifiers = [
+      { id: 'id-1', did: 'did:web:example#1', alias: 'alias-1' },
+      { id: 'id-2', did: 'did:web:example#2', alias: 'alias-2' },
+    ];
+    const mockDtos = [
+      { id: 'id-1', did: 'did:web:example#1', alias: 'alias-1' },
+      { id: 'id-2', did: 'did:web:example#2', alias: 'alias-2' },
+    ];
+
+    mocks.identifiersRepository.listIdentifiers.mockResolvedValue(mockIdentifiers);
+    mocks.toIdentifierDtoMock.mockReturnValueOnce(mockDtos[0]).mockReturnValueOnce(mockDtos[1]);
+
+    const result = await listIdentifiers({});
+
+    expect(getRequestContext).toHaveBeenCalledTimes(1);
+    expect(mocks.identifiersRepository.listIdentifiers).toHaveBeenCalledWith({
+      offset: undefined,
+      limit: undefined,
+      alias: undefined,
+      provider: undefined,
+    });
+    expect(vi.mocked(toIdentifierDto)).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(mockDtos);
+  });
+
+  it('lists identifiers with pagination parameters', async () => {
+    const mockIdentifiers = [{ id: 'id-1', did: 'did:web:example#1', alias: 'alias-1' }];
+    const mockDtos = [{ id: 'id-1', did: 'did:web:example#1', alias: 'alias-1' }];
+
+    mocks.identifiersRepository.listIdentifiers.mockResolvedValue(mockIdentifiers);
+    mocks.toIdentifierDtoMock.mockReturnValue(mockDtos[0]);
+
+    const result = await listIdentifiers({
+      offset: 10,
+      limit: 5,
+    });
+
+    expect(mocks.identifiersRepository.listIdentifiers).toHaveBeenCalledWith({
+      offset: 10,
+      limit: 5,
+      alias: undefined,
+      provider: undefined,
+    });
+    expect(result).toEqual(mockDtos);
+  });
+
+  it('lists identifiers with filters', async () => {
+    const mockIdentifiers = [{ id: 'id-1', did: 'did:web:example#1', alias: 'test-alias' }];
+    const mockDtos = [{ id: 'id-1', did: 'did:web:example#1', alias: 'test-alias' }];
+
+    mocks.identifiersRepository.listIdentifiers.mockResolvedValue(mockIdentifiers);
+    mocks.toIdentifierDtoMock.mockReturnValue(mockDtos[0]);
+
+    const result = await listIdentifiers({
+      alias: 'test-alias',
+      provider: 'did:web',
+    });
+
+    expect(mocks.identifiersRepository.listIdentifiers).toHaveBeenCalledWith({
+      offset: undefined,
+      limit: undefined,
+      alias: 'test-alias',
+      provider: 'did:web',
+    });
+    expect(result).toEqual(mockDtos);
+  });
+
+  it('returns empty array when no identifiers found', async () => {
+    mocks.identifiersRepository.listIdentifiers.mockResolvedValue([]);
+
+    const result = await listIdentifiers({});
+
+    expect(mocks.identifiersRepository.listIdentifiers).toHaveBeenCalledWith({
+      offset: undefined,
+      limit: undefined,
+      alias: undefined,
+      provider: undefined,
+    });
+    expect(result).toEqual([]);
   });
 });

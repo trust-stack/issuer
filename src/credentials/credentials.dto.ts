@@ -1,10 +1,13 @@
 import { z } from '@hono/zod-openapi';
+import type { CredentialRecord } from './credentials.repository';
 
 export const CreateCredentialSchema = z.object({
-  issuerDid: z.object({
-    alias: z.string().optional().nullable(),
-    did: z.string().optional().nullable(),
-  }),
+  issuerDid: z
+    .object({
+      alias: z.string().optional().nullable(),
+      did: z.string().optional().nullable(),
+    })
+    .optional(),
   credential: z.record(z.string(), z.any()),
 });
 export type CreateCredentialDto = z.infer<typeof CreateCredentialSchema>;
@@ -14,3 +17,9 @@ export const CredentialSchema = z.object({
 });
 
 export type CredentialDto = z.infer<typeof CredentialSchema>;
+
+export function toCredentialDto(credential: CredentialRecord): CredentialDto {
+  return {
+    id: credential.id,
+  };
+}

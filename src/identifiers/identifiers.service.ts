@@ -33,3 +33,23 @@ export async function createIdentifier(dto: CreateIdentifierDto): Promise<Identi
     return toIdentifierDto(identifier);
   });
 }
+
+export type ListIdentifiersParams = {
+  offset?: number;
+  limit?: number;
+  alias?: string;
+  provider?: string;
+};
+
+export async function listIdentifiers(
+  params: ListIdentifiersParams = {},
+): Promise<IdentifierDto[]> {
+  const { identifiersRepository } = getRequestContext();
+  const identifiers = await identifiersRepository.listIdentifiers({
+    offset: params.offset,
+    limit: params.limit,
+    alias: params.alias,
+    provider: params.provider,
+  });
+  return identifiers.map(toIdentifierDto);
+}

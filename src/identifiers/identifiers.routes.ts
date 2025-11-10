@@ -43,3 +43,38 @@ export const getIdentifierRoute = createRoute({
     },
   },
 });
+
+export const listIdentifiersRoute = createRoute({
+  method: 'get',
+  path: '/',
+  request: {
+    query: z.object({
+      offset: z.coerce.number().int().min(0).default(0).openapi({
+        description: 'Number of identifiers to skip',
+        example: 0,
+      }),
+      limit: z.coerce.number().int().min(1).max(100).default(20).openapi({
+        description: 'Maximum number of identifiers to return',
+        example: 20,
+      }),
+      alias: z.string().optional().openapi({
+        description: 'Filter by alias',
+        example: 'my-alias',
+      }),
+      provider: z.string().optional().openapi({
+        description: 'Filter by provider',
+        example: 'did:web',
+      }),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of identifiers',
+      content: {
+        'application/json': {
+          schema: z.array(IdentifierSchema),
+        },
+      },
+    },
+  },
+});
