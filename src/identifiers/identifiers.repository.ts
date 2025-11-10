@@ -13,6 +13,7 @@ export type IdentifierListFilter = {
 
 export interface IdentifiersRepository {
   findIdentifier(lookup: IdentifierLookup): Promise<Identifier | null>;
+  findDefaultIdentifier(): Promise<Identifier | null>;
   updateIdentifier(did: string, dto: UpdateIdentifierDto): Promise<Identifier | null>;
   saveIdentifierDetails(identifier: IIdentifier): Promise<void>;
   findIdentifierDetails(lookup: IdentifierLookup): Promise<IIdentifier | null>;

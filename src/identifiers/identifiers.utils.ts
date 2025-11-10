@@ -11,3 +11,23 @@ export const constructAlias = (alias: string) => {
   const env = getEnv();
   return `${env.WEB_DID_DOMAIN}:${context.auth.organizationId}:${alias}`;
 };
+
+/**
+ * Construct a default alias (for DID creation)
+ * @returns The default alias
+ */
+export const constructDefaultAlias = () => {
+  const context = getRequestContext();
+  const env = getEnv();
+  return `${env.WEB_DID_DOMAIN}:${context.auth.organizationId}`;
+};
+
+/**
+ * Construct a default DID
+ * @returns The default DID
+ */
+export const constructDefaultDid = () => {
+  const context = getRequestContext();
+  const env = getEnv();
+  return `did:web:${env.WEB_DID_DOMAIN}:${context.auth.organizationId}`;
+};

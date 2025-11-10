@@ -44,6 +44,30 @@ export const getIdentifierRoute = createRoute({
   },
 });
 
+export const getDefaultIdentifierRoute = createRoute({
+  method: 'get',
+  path: '/default',
+  request: {
+    query: z.object({
+      organizationId: z.string(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Identifier fetched',
+      content: {
+        'application/json': { schema: IdentifierSchema },
+      },
+    },
+    201: {
+      description: 'Default identifier created',
+      content: {
+        'application/json': { schema: IdentifierSchema },
+      },
+    },
+  },
+});
+
 export const listIdentifiersRoute = createRoute({
   method: 'get',
   path: '/',

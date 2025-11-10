@@ -2,16 +2,29 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { getRequestContext } from 'src/request-context';
 import {
   createIdentifierRoute,
+  getDefaultIdentifierRoute,
   getIdentifierRoute,
   listIdentifiersRoute,
 } from './identifiers.routes';
-import { createIdentifier, listIdentifiers } from './identifiers.service';
+import { createDefaultIdentifier, createIdentifier, listIdentifiers } from './identifiers.service';
 
 const app = new OpenAPIHono();
 
 app.openapi(createIdentifierRoute, async (c) => {
   const identifier = await createIdentifier(c.req.valid('json'));
   return c.json(identifier, 201);
+});
+
+app.openapi(getDefaultIdentifierRoute, async (c) => {
+  const { identifiersRepository } = getRequestContext();
+  const identifier = await identifiersRepository.findDefaultIdentifier();
+
+  if (!identifier) {
+    const defaultIdentifier = await createDefaultIdentifier();
+    return c.json(defaultIdentifier, 201);
+  }
+
+  return c.json(identifier, 200);
 });
 
 app.openapi(getIdentifierRoute, async (c) => {

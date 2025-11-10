@@ -77,6 +77,27 @@ async function resolveDidDocument(did: string, db: any): Promise<any> {
 export function registerDidRoute(app: any, credentialsRepository: any, webDidDomain: string): void {
   const db = credentialsRepository.db;
 
+  // Route for default organization DID: /:organizationId/did.json
+  app.get('/:organizationId/did.json', async (c: any) => {
+    const { organizationId } = c.req.param();
+
+    if (!db) {
+      return c.json({ error: 'Database not available' }, 500);
+    }
+
+    try {
+      // Construct DID from path: did:web:domain:organizationId
+      const did = `did:web:${webDidDomain}:${organizationId}`;
+
+      const didDocument = await resolveDidDocument(did, db);
+      return c.json(didDocument, 200);
+    } catch (error: any) {
+      console.error('Failed to resolve DID', error);
+      return c.json({ error: 'Failed to resolve DID' }, 500);
+    }
+  });
+
+  // Route for organization DID with alias: /:organizationId/:alias/did.json
   app.get('/:organizationId/:alias/did.json', async (c: any) => {
     const { organizationId, alias } = c.req.param();
 
