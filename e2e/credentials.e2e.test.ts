@@ -4,6 +4,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { resolve } from 'node:path';
 import * as schema from 'src/db/schema';
 import { defaultSqliteOptions } from 'src/infra/sqlite/options';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const dbRef = vi.hoisted(() => ({ current: undefined as ReturnType<typeof drizzle> | undefined }));
 
@@ -30,6 +31,12 @@ describe('Credentials (e2e)', () => {
 
   beforeEach(() => {
     resetData(sqlite);
+    // Silence console.error during tests
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('POST /credentials', () => {

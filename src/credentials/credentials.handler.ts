@@ -21,7 +21,7 @@ app.openapi(createCredentialRoute, async (c) => {
     return c.json({ id: credential.id! }, 201);
   } catch (error: any) {
     console.error('Failed to create credential', error);
-    return c.json({ message: error.message || 'Failed to create credential' }, 500);
+    throw new Error('Failed to create credential');
   }
 });
 
