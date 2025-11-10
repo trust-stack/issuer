@@ -15,9 +15,14 @@ import {
 const app = new OpenAPIHono();
 
 app.openapi(createCredentialRoute, async (c) => {
-  const credential = await createCredential(c.req.valid('json'));
+  try {
+    const credential = await createCredential(c.req.valid('json'));
 
-  return c.json({ id: credential.id! }, 201);
+    return c.json({ id: credential.id! }, 201);
+  } catch (error: any) {
+    console.error('Failed to create credential', error);
+    return c.json({ message: error.message || 'Failed to create credential' }, 500);
+  }
 });
 
 app.openapi(getCredentialRoute, async (c) => {

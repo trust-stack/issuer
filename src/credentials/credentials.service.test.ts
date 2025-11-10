@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => {
   const identifiersRepository = {
     findIdentifier: vi.fn(),
     listIdentifiers: vi.fn(),
+    findIdentifierDetails: vi.fn(),
   };
   const getRequestContextMock = vi.fn();
 
@@ -19,7 +20,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../agent', () => ({
+vi.mock('src/agent', () => ({
   getAgent: mocks.getAgentMock,
 }));
 
@@ -49,6 +50,22 @@ describe('createCredential', () => {
         did: 'did:web:example.com',
         alias: 'test-alias',
       };
+      const identifierDetails = {
+        did: identifier.did,
+        alias: identifier.alias,
+        provider: 'did:web',
+        controllerKeyId: 'key-1',
+        keys: [
+          {
+            kid: 'key-1',
+            kms: 'local',
+            type: 'Ed25519',
+            publicKeyHex: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+            meta: {},
+          },
+        ],
+        services: [],
+      };
       const credential = {
         id: 'credential-id',
         issuer: { id: identifier.did },
@@ -56,6 +73,7 @@ describe('createCredential', () => {
       };
 
       mocks.identifiersRepository.findIdentifier.mockResolvedValue(identifier);
+      mocks.identifiersRepository.findIdentifierDetails.mockResolvedValue(identifierDetails);
       mocks.createVerifiableCredentialMock.mockResolvedValue(credential);
 
       const result = await createCredential({
@@ -82,6 +100,22 @@ describe('createCredential', () => {
         did: 'did:web:example.com',
         alias: 'test-alias',
       };
+      const identifierDetails = {
+        did: identifier.did,
+        alias: identifier.alias,
+        provider: 'did:web',
+        controllerKeyId: 'key-1',
+        keys: [
+          {
+            kid: 'key-1',
+            kms: 'local',
+            type: 'Ed25519',
+            publicKeyHex: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+            meta: {},
+          },
+        ],
+        services: [],
+      };
       const credential = {
         id: 'credential-id',
         issuer: { id: identifier.did },
@@ -89,6 +123,7 @@ describe('createCredential', () => {
       };
 
       mocks.identifiersRepository.findIdentifier.mockResolvedValue(identifier);
+      mocks.identifiersRepository.findIdentifierDetails.mockResolvedValue(identifierDetails);
       mocks.createVerifiableCredentialMock.mockResolvedValue(credential);
 
       const result = await createCredential({
@@ -128,6 +163,22 @@ describe('createCredential', () => {
         did: 'did:web:example.com',
         alias: 'default-alias',
       };
+      const identifierDetails = {
+        did: identifier.did,
+        alias: identifier.alias,
+        provider: 'did:web',
+        controllerKeyId: 'key-1',
+        keys: [
+          {
+            kid: 'key-1',
+            kms: 'local',
+            type: 'Ed25519',
+            publicKeyHex: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+            meta: {},
+          },
+        ],
+        services: [],
+      };
       const credential = {
         id: 'credential-id',
         issuer: { id: identifier.did },
@@ -135,6 +186,7 @@ describe('createCredential', () => {
       };
 
       mocks.identifiersRepository.listIdentifiers.mockResolvedValue([identifier]);
+      mocks.identifiersRepository.findIdentifierDetails.mockResolvedValue(identifierDetails);
       mocks.createVerifiableCredentialMock.mockResolvedValue(credential);
 
       const result = await createCredential({
