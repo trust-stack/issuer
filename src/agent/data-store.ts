@@ -86,20 +86,23 @@ const rowToMessage = (
   presentations: linkedPresentations,
 });
 
+/** Only DIDs are stored in credentials.subject_id (FK to identifiers). Product URIs etc. stay in the VC payload only. */
 const credentialSubjectId = (credential: VerifiableCredential): string | undefined => {
   const subject = credential.credentialSubject;
 
+  let id: string | undefined;
   if (Array.isArray(subject)) {
     const match = subject.find(
       (item): item is { id: string } => typeof item === 'object' && item !== null && 'id' in item,
     );
-    return match?.id;
+    id = match?.id;
+  } else if (typeof subject === 'object' && subject && 'id' in subject) {
+    id = subject.id as string;
   }
 
-  if (typeof subject === 'object' && subject && 'id' in subject) {
-    return subject.id as string;
+  if (typeof id === 'string' && id.startsWith('did:')) {
+    return id;
   }
-
   return undefined;
 };
 
@@ -183,7 +186,17 @@ export class DataStore implements IAgentPlugin {
       subjectId: credentialSubjectId(verifiableCredential) ?? null,
       type: ensureArray(verifiableCredential.type),
     };
-    await this.getCredentialsRepository().saveCredential(values);
+    try {
+      await this.getCredentialsRepository().saveCredential(values);
+    } catch (error: unknown) {
+      // subjectId FK may reference an external DID not in local identifiers — retry without it
+      if (error instanceof Error && error.message?.includes('FOREIGN KEY')) {
+        values.subjectId = null;
+        await this.getCredentialsRepository().saveCredential(values);
+      } else {
+        throw error;
+      }
+    }
 
     const encrypted = encryptString(JSON.stringify(verifiableCredential));
     await this.getEncryptedCredentialsRepository().upsertEncryptedCredential({

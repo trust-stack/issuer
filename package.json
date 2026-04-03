@@ -44,6 +44,8 @@
     "@veramo/key-manager": "^6.0.0",
     "@veramo/kms-local": "^6.0.0",
     "@veramo/utils": "^6.0.0",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "did-resolver": "^4.1.0",
     "drizzle-kit": "^0.31.5",
     "drizzle-orm": "^0.44.5",

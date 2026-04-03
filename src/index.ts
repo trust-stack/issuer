@@ -17,6 +17,7 @@ import { PrivateKeyRepository } from './private-key';
 import { registerPublicCredentialRoute } from './public/credentials.routes';
 import { registerDidRoute } from './public/did.routes';
 import { authMiddleware, dependencyMiddlewareFactory } from './request-context';
+import { createUntpHandler } from './untp';
 import { VcClaimsRepository } from './vc-claims';
 
 export type AppOptions = {
@@ -52,6 +53,7 @@ export function createApp(options: AppOptions) {
 
   app.route('/identifiers', identifiers);
   app.route('/credentials', credentials);
+  app.route('/untp', createUntpHandler());
 
   return app;
 }
