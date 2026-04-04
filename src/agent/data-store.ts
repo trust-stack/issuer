@@ -13,13 +13,7 @@ import {
 import { computeEntryHash, extractIssuer } from '@veramo/utils';
 import type { CredentialInsert, CredentialsRepository } from 'src/credentials';
 import type { EncryptedCredentialsRepository } from 'src/encrypted-credentials';
-import type { MessagesRepository, MessageInsert, MessageRecord } from 'src/messages';
-import type { PresentationCredentialsRepository } from 'src/presentation-credentials';
-import type { CredentialMessagesRepository } from 'src/credential-messages';
-import type { PresentationMessagesRepository } from 'src/presentation-messages';
-import type { PresentationVerifiersRepository } from 'src/presentation-verifiers';
-import type { PresentationInsert, PresentationsRepository } from 'src/presentations';
-import type { VcClaimsRepository } from 'src/vc-claims';
+import type { MessageStoreRepository, MessageInsert, MessageRecord } from 'src/messages';
 import { getRequestContext } from '../request-context';
 import { encryptString } from './encryption';
 
@@ -64,16 +58,11 @@ const messageToRow = (message: IMessage): MessageInsert => ({
   returnRoute: message.returnRoute ?? null,
 });
 
-const rowToMessage = (
-  row: MessageRecord,
-  linkedCredentials: VerifiableCredential[],
-  linkedPresentations: VerifiablePresentation[],
-): IMessage => ({
+const rowToMessage = (row: MessageRecord, linkedCredentials: VerifiableCredential[]): IMessage => ({
   id: row.id,
   type: row.type,
   raw: row.raw ?? undefined,
   data: (row.data as Record<string, unknown> | null) ?? undefined,
-
   // metaData: (row.metaData as unknown[] | null) ?? undefined,
   replyTo: row.replyTo ?? undefined,
   replyUrl: row.replyUrl ?? undefined,
@@ -83,7 +72,7 @@ const rowToMessage = (
   from: row.fromId ?? undefined,
   to: row.toId ?? undefined,
   credentials: linkedCredentials,
-  presentations: linkedPresentations,
+  presentations: [],
 });
 
 /** Only DIDs are stored in credentials.subject_id (FK to identifiers). Product URIs etc. stay in the VC payload only. */
@@ -134,34 +123,25 @@ export class DataStore implements IAgentPlugin {
 
   private async dataStoreSaveMessage({ message }: IDataStoreSaveMessageArgs): Promise<string> {
     const row = messageToRow(message);
-    await this.getMessagesRepository().saveMessage(row);
-
+    await this.getMessageStoreRepository().saveMessage(row);
     return message.id;
   }
 
   private async dataStoreGetMessage({ id }: IDataStoreGetMessageArgs): Promise<IMessage> {
-    const row = await this.getMessagesRepository().findMessageById(id);
+    const messageStore = this.getMessageStoreRepository();
+    const row = await messageStore.findMessageById(id);
 
     if (!row) throw new Error('Message not found.');
 
-    const credentialHashes =
-      await this.getCredentialMessagesRepository().findCredentialHashesByMessageId(row.id);
-
-    const presentationHashes =
-      await this.getPresentationMessagesRepository().findPresentationHashesByMessageId(row.id);
+    const credentialHashes = await messageStore.findCredentialHashesByMessageId(row.id);
 
     const credentialRows = credentialHashes.length
       ? await this.getCredentialsRepository().findCredentialsByHashes(credentialHashes)
       : [];
 
-    const presentationRows = presentationHashes.length
-      ? await this.getPresentationsRepository().findPresentationsByHashes(presentationHashes)
-      : [];
-
     return rowToMessage(
       row,
       credentialRows.map((item) => item.raw as VerifiableCredential),
-      presentationRows.map((item) => item.raw as VerifiablePresentation),
     );
   }
 
@@ -228,66 +208,29 @@ export class DataStore implements IAgentPlugin {
 
     if (!credential) return false;
 
-    await this.getVcClaimsRepository().deleteByCredentialHash(hash);
-    await this.getCredentialMessagesRepository().deleteByCredentialHash(hash);
-    await this.getPresentationCredentialsRepository().deleteByCredentialHash(hash);
+    await this.getMessageStoreRepository().deleteByCredentialHash(hash);
     await this.getEncryptedCredentialsRepository().deleteByCredentialId(credential.id);
     await this.getCredentialsRepository().deleteCredentialByHash(hash);
 
     return true;
   }
 
-  private async dataStoreSaveVerifiablePresentation({
-    verifiablePresentation,
-  }: IDataStoreSaveVerifiablePresentationArgs): Promise<string> {
-    if (typeof verifiablePresentation.holder !== 'string') {
-      throw new Error('verifiablePresentation.holder must be a DID string');
-    }
-
-    const hash = computeEntryHash(verifiablePresentation);
-    const { tenantId } = getTenantContext();
-    const holderDid = verifiablePresentation.holder;
-
-    const values: PresentationInsert = {
-      hash,
-      tenantId,
-      raw: verifiablePresentation as unknown,
-      holderId: holderDid,
-      id: verifiablePresentation.id ?? null,
-      context: ensureArray(verifiablePresentation['@context'] as unknown),
-      type: ensureArray(verifiablePresentation.type),
-      issuanceDate: verifiablePresentation.issuanceDate ?? '',
-      expirationDate: verifiablePresentation.expirationDate ?? null,
-    };
-    await this.getPresentationsRepository().savePresentation(values);
-
-    const verifiers = ensureArray(verifiablePresentation.verifier).filter(
-      (item): item is string => typeof item === 'string',
-    );
-
-    await this.getPresentationVerifiersRepository().replaceVerifiers(hash, verifiers);
-
-    return hash;
+  // VP operations are not yet implemented — these satisfy the Veramo plugin interface
+  private async dataStoreSaveVerifiablePresentation(
+    _args: IDataStoreSaveVerifiablePresentationArgs,
+  ): Promise<string> {
+    throw new Error('dataStoreSaveVerifiablePresentation is not implemented');
   }
 
-  private async dataStoreGetVerifiablePresentation({
-    hash,
-  }: IDataStoreGetVerifiablePresentationArgs): Promise<VerifiablePresentation> {
-    const record = await this.getPresentationsRepository().findPresentationByHash(hash);
-
-    if (!record) throw new Error('Verifiable presentation not found.');
-
-    return record.raw as VerifiablePresentation;
+  private async dataStoreGetVerifiablePresentation(
+    _args: IDataStoreGetVerifiablePresentationArgs,
+  ): Promise<VerifiablePresentation> {
+    throw new Error('dataStoreGetVerifiablePresentation is not implemented');
   }
 
-  private getMessagesRepository(): MessagesRepository {
-    const { messagesRepository } = getRequestContext();
-    return messagesRepository;
-  }
-
-  private getCredentialMessagesRepository(): CredentialMessagesRepository {
-    const { credentialMessagesRepository } = getRequestContext();
-    return credentialMessagesRepository;
+  private getMessageStoreRepository(): MessageStoreRepository {
+    const { messageStoreRepository } = getRequestContext();
+    return messageStoreRepository;
   }
 
   private getCredentialsRepository(): CredentialsRepository {
@@ -298,31 +241,6 @@ export class DataStore implements IAgentPlugin {
   private getEncryptedCredentialsRepository(): EncryptedCredentialsRepository {
     const { encryptedCredentialsRepository } = getRequestContext();
     return encryptedCredentialsRepository;
-  }
-
-  private getPresentationCredentialsRepository(): PresentationCredentialsRepository {
-    const { presentationCredentialsRepository } = getRequestContext();
-    return presentationCredentialsRepository;
-  }
-
-  private getPresentationMessagesRepository(): PresentationMessagesRepository {
-    const { presentationMessagesRepository } = getRequestContext();
-    return presentationMessagesRepository;
-  }
-
-  private getPresentationVerifiersRepository(): PresentationVerifiersRepository {
-    const { presentationVerifiersRepository } = getRequestContext();
-    return presentationVerifiersRepository;
-  }
-
-  private getPresentationsRepository(): PresentationsRepository {
-    const { presentationsRepository } = getRequestContext();
-    return presentationsRepository;
-  }
-
-  private getVcClaimsRepository(): VcClaimsRepository {
-    const { vcClaimsRepository } = getRequestContext();
-    return vcClaimsRepository;
   }
 }
 
