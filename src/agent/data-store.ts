@@ -12,10 +12,8 @@ import {
 } from '@veramo/core';
 import { computeEntryHash, extractIssuer } from '@veramo/utils';
 import type { CredentialInsert, CredentialsRepository } from 'src/credentials';
-import type { EncryptedCredentialsRepository } from 'src/encrypted-credentials';
 import type { MessageStoreRepository, MessageInsert, MessageRecord } from 'src/messages';
 import { getRequestContext } from '../request-context';
-import { encryptString } from './encryption';
 
 export type SaveVerifiableCredentialArgs = {
   verifiableCredential: VerifiableCredential;
@@ -178,16 +176,6 @@ export class DataStore implements IAgentPlugin {
       }
     }
 
-    const encrypted = encryptString(JSON.stringify(verifiableCredential));
-    await this.getEncryptedCredentialsRepository().upsertEncryptedCredential({
-      credentialId,
-      cipherText: encrypted.cipherText,
-      iv: encrypted.iv,
-      tag: encrypted.tag,
-      key: encrypted.key,
-      algorithm: 'AES_GCM',
-    });
-
     return hash;
   }
 
@@ -209,7 +197,6 @@ export class DataStore implements IAgentPlugin {
     if (!credential) return false;
 
     await this.getMessageStoreRepository().deleteByCredentialHash(hash);
-    await this.getEncryptedCredentialsRepository().deleteByCredentialId(credential.id);
     await this.getCredentialsRepository().deleteCredentialByHash(hash);
 
     return true;
@@ -236,11 +223,6 @@ export class DataStore implements IAgentPlugin {
   private getCredentialsRepository(): CredentialsRepository {
     const { credentialsRepository } = getRequestContext();
     return credentialsRepository;
-  }
-
-  private getEncryptedCredentialsRepository(): EncryptedCredentialsRepository {
-    const { encryptedCredentialsRepository } = getRequestContext();
-    return encryptedCredentialsRepository;
   }
 }
 

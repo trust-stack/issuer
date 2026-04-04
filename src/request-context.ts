@@ -3,7 +3,6 @@ import { getContext } from 'hono/context-storage';
 import { AppOptions } from '.';
 import type { AuthContext } from './auth';
 import { CredentialsRepository } from './credentials';
-import { EncryptedCredentialsRepository } from './encrypted-credentials';
 import { IdentifiersRepository } from './identifiers';
 import { MessageStoreRepository } from './messages';
 import { PrivateKeyRepository } from './private-key';
@@ -11,10 +10,10 @@ import { PrivateKeyRepository } from './private-key';
 export type RequestContext = {
   auth: AuthContext;
   credentialsRepository: CredentialsRepository;
-  encryptedCredentialsRepository: EncryptedCredentialsRepository;
   identifiersRepository: IdentifiersRepository;
   messageStoreRepository: MessageStoreRepository;
   privateKeyRepository: PrivateKeyRepository;
+  kmsSecretKey: string | undefined;
 };
 
 export const getRequestContext = (): RequestContext => {
@@ -49,10 +48,10 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
 export const dependencyMiddlewareFactory = (options: AppOptions) => {
   const middleware: MiddlewareHandler = async (c, next) => {
     c.set('credentialsRepository', options.credentialsRepository);
-    c.set('encryptedCredentialsRepository', options.encryptedCredentialsRepository);
     c.set('identifiersRepository', options.identifiersRepository);
     c.set('messageStoreRepository', options.messageStoreRepository);
     c.set('privateKeyRepository', options.privateKeyRepository);
+    c.set('kmsSecretKey', options.kmsSecretKey);
     return next();
   };
 

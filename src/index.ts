@@ -2,7 +2,6 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { contextStorage } from 'hono/context-storage';
 import { CredentialsRepository } from './credentials';
 import credentials from './credentials/credentials.handler';
-import { EncryptedCredentialsRepository } from './encrypted-credentials';
 import { getEnv } from './env';
 import { IdentifiersRepository } from './identifiers';
 import identifiers from './identifiers/identifiers.handler';
@@ -15,10 +14,10 @@ import { createUntpHandler } from './untp';
 
 export type AppOptions = {
   credentialsRepository: CredentialsRepository;
-  encryptedCredentialsRepository: EncryptedCredentialsRepository;
   identifiersRepository: IdentifiersRepository;
   messageStoreRepository: MessageStoreRepository;
   privateKeyRepository: PrivateKeyRepository;
+  kmsSecretKey?: string;
 };
 
 export function createApp(options: AppOptions) {

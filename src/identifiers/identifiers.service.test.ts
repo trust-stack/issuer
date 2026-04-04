@@ -26,10 +26,6 @@ const mocks = vi.hoisted(() => {
     findCredentialsByHashes: vi.fn(),
     deleteCredentialByHash: vi.fn(),
   };
-  const encryptedCredentialsRepository = {
-    upsertEncryptedCredential: vi.fn(),
-    deleteByCredentialId: vi.fn(),
-  };
   const messageStoreRepository = {
     saveMessage: vi.fn(),
     findMessageById: vi.fn(),
@@ -52,7 +48,6 @@ const mocks = vi.hoisted(() => {
     uuidMock,
     identifiersRepository,
     credentialsRepository,
-    encryptedCredentialsRepository,
     messageStoreRepository,
     privateKeyRepository,
     getRequestContextMock,
@@ -93,7 +88,6 @@ const baseContext = () => ({
   },
   identifiersRepository: mocks.identifiersRepository,
   credentialsRepository: mocks.credentialsRepository,
-  encryptedCredentialsRepository: mocks.encryptedCredentialsRepository,
   messageStoreRepository: mocks.messageStoreRepository,
   privateKeyRepository: mocks.privateKeyRepository,
 });

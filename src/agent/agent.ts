@@ -5,22 +5,28 @@ import { DIDManager } from '@veramo/did-manager';
 import { WebDIDProvider } from '@veramo/did-provider-web';
 import { DIDResolverPlugin } from '@veramo/did-resolver';
 import { KeyManager } from '@veramo/key-manager';
-import { KeyManagementSystem } from '@veramo/kms-local';
+import { KeyManagementSystem, SecretBox } from '@veramo/kms-local';
 import { Resolver } from 'did-resolver';
 import { getResolver as webDidResolver } from 'web-did-resolver';
+import { getRequestContext } from 'src/request-context';
 import { DataStore } from './data-store';
 import { DidStore } from './did-store';
 import { KeyStore } from './key-store';
 import { PrivateKeyStore } from './private-key-store';
 
 export const getAgent = () => {
+  const { kmsSecretKey } = getRequestContext();
+
   return createAgent<IDIDManager & IKeyManager & IDataStore & IResolver & ICredentialPlugin>({
     plugins: [
       new DataStore(),
       new KeyManager({
         store: new KeyStore(),
         kms: {
-          local: new KeyManagementSystem(new PrivateKeyStore()),
+          local: new KeyManagementSystem(
+            new PrivateKeyStore(),
+            kmsSecretKey ? new SecretBox(kmsSecretKey) : undefined,
+          ),
         },
       }),
       new DIDManager({

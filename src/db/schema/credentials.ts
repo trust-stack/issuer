@@ -1,6 +1,5 @@
 import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { uuid } from 'src/utils';
-import { encryptionAlgorithmEnum } from './enums';
 import { identifiers } from './identifiers';
 
 export const credentials = sqliteTable(
@@ -33,50 +32,3 @@ export const credentials = sqliteTable(
     index('credentials_org_idx').on(table.organizationId),
   ],
 );
-
-export const encryptedCredentials = sqliteTable(
-  'encrypted_credentials',
-  {
-    id: text('id')
-      .primaryKey()
-      .$defaultFn(() => uuid()),
-    version: integer('version').notNull().default(1),
-    credentialId: text('credential_id')
-      .notNull()
-      .references(() => credentials.id, {
-        onDelete: 'cascade',
-        onUpdate: 'cascade',
-      }),
-    cipherText: text('cipher_text').notNull(),
-    iv: text('iv').notNull(),
-    tag: text('tag').notNull(),
-    key: text('key').notNull(),
-    algorithm: text('algorithm', { enum: encryptionAlgorithmEnum }).notNull(),
-  },
-  (table) => [uniqueIndex('encrypted_credentials_credential_unique').on(table.credentialId)],
-);
-
-export const vcClaims = sqliteTable('vc_claims', {
-  hash: text('hash').primaryKey(),
-  issuerId: text('issuer_id')
-    .notNull()
-    .references(() => identifiers.did, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    }),
-  subjectId: text('subject_id').references(() => identifiers.did, {
-    onDelete: 'set null',
-    onUpdate: 'cascade',
-  }),
-  credentialId: text('credential_id')
-    .notNull()
-    .references(() => credentials.hash, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade',
-    }),
-  context: text('context', { mode: 'json' }).$type<string[]>(),
-  credentialType: text('credential_type', { mode: 'json' }).$type<string[]>(),
-  type: text('type').notNull(),
-  value: text('value'),
-  isObj: integer('is_obj').notNull().default(0),
-});
