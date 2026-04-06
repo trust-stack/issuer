@@ -8,22 +8,17 @@ const mocks = vi.hoisted(() => {
   const uuidMock = vi.fn();
   const identifiersRepository = {
     findIdentifier: vi.fn(),
+    findDefaultIdentifier: vi.fn(),
     updateIdentifier: vi.fn(),
     saveIdentifierDetails: vi.fn(),
     findIdentifierDetails: vi.fn(),
     deleteIdentifierByDid: vi.fn(),
     listIdentifierDetails: vi.fn(),
     listIdentifiers: vi.fn(),
-  };
-  const keysRepository = {
     saveKey: vi.fn(),
     findKey: vi.fn(),
     deleteKey: vi.fn(),
     listKeys: vi.fn(),
-  };
-  const credentialMessagesRepository = {
-    findCredentialHashesByMessageId: vi.fn(),
-    deleteByCredentialHash: vi.fn(),
   };
   const credentialsRepository = {
     saveCredential: vi.fn(),
@@ -31,36 +26,17 @@ const mocks = vi.hoisted(() => {
     findCredentialsByHashes: vi.fn(),
     deleteCredentialByHash: vi.fn(),
   };
-  const encryptedCredentialsRepository = {
-    upsertEncryptedCredential: vi.fn(),
-    deleteByCredentialId: vi.fn(),
-  };
-  const messagesRepository = {
+  const messageStoreRepository = {
     saveMessage: vi.fn(),
     findMessageById: vi.fn(),
-  };
-  const presentationCredentialsRepository = {
+    findCredentialHashesByMessageId: vi.fn(),
     deleteByCredentialHash: vi.fn(),
-  };
-  const presentationMessagesRepository = {
-    findPresentationHashesByMessageId: vi.fn(),
-  };
-  const presentationVerifiersRepository = {
-    replaceVerifiers: vi.fn(),
-  };
-  const presentationsRepository = {
-    savePresentation: vi.fn(),
-    findPresentationByHash: vi.fn(),
-    findPresentationsByHashes: vi.fn(),
   };
   const privateKeyRepository = {
     createPrivateKey: vi.fn(),
     listPrivateKeys: vi.fn(),
     deletePrivateKey: vi.fn(),
     getPrivateKey: vi.fn(),
-  };
-  const vcClaimsRepository = {
-    deleteByCredentialHash: vi.fn(),
   };
   const getRequestContextMock = vi.fn();
 
@@ -71,17 +47,9 @@ const mocks = vi.hoisted(() => {
     constructAliasMock,
     uuidMock,
     identifiersRepository,
-    keysRepository,
-    credentialMessagesRepository,
     credentialsRepository,
-    encryptedCredentialsRepository,
-    messagesRepository,
-    presentationCredentialsRepository,
-    presentationMessagesRepository,
-    presentationVerifiersRepository,
-    presentationsRepository,
+    messageStoreRepository,
     privateKeyRepository,
-    vcClaimsRepository,
     getRequestContextMock,
   };
 });
@@ -112,29 +80,23 @@ import { getAgent } from '../agent';
 import { toIdentifierDto } from './identifiers.dto';
 import { createIdentifier, listIdentifiers } from './identifiers.service';
 
+const baseContext = () => ({
+  auth: {
+    organizationId: 'org-123',
+    tenantId: 'tenant-456',
+    userId: 'user-789',
+  },
+  identifiersRepository: mocks.identifiersRepository,
+  credentialsRepository: mocks.credentialsRepository,
+  messageStoreRepository: mocks.messageStoreRepository,
+  privateKeyRepository: mocks.privateKeyRepository,
+});
+
 describe('createIdentifier', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAgentMock.mockReturnValue({ didManagerCreate: mocks.didManagerCreateMock });
-    mocks.getRequestContextMock.mockReturnValue({
-      auth: {
-        organizationId: 'org-123',
-        tenantId: 'tenant-456',
-        userId: 'user-789',
-      },
-      identifiersRepository: mocks.identifiersRepository,
-      keysRepository: mocks.keysRepository,
-      credentialMessagesRepository: mocks.credentialMessagesRepository,
-      credentialsRepository: mocks.credentialsRepository,
-      encryptedCredentialsRepository: mocks.encryptedCredentialsRepository,
-      presentationCredentialsRepository: mocks.presentationCredentialsRepository,
-      presentationMessagesRepository: mocks.presentationMessagesRepository,
-      presentationVerifiersRepository: mocks.presentationVerifiersRepository,
-      presentationsRepository: mocks.presentationsRepository,
-      messagesRepository: mocks.messagesRepository,
-      privateKeyRepository: mocks.privateKeyRepository,
-      vcClaimsRepository: mocks.vcClaimsRepository,
-    });
+    mocks.getRequestContextMock.mockReturnValue(baseContext());
   });
 
   it('creates an identifier with a provided alias', async () => {
@@ -214,25 +176,7 @@ describe('createIdentifier', () => {
 describe('listIdentifiers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getRequestContextMock.mockReturnValue({
-      auth: {
-        organizationId: 'org-123',
-        tenantId: 'tenant-456',
-        userId: 'user-789',
-      },
-      identifiersRepository: mocks.identifiersRepository,
-      keysRepository: mocks.keysRepository,
-      credentialMessagesRepository: mocks.credentialMessagesRepository,
-      credentialsRepository: mocks.credentialsRepository,
-      encryptedCredentialsRepository: mocks.encryptedCredentialsRepository,
-      presentationCredentialsRepository: mocks.presentationCredentialsRepository,
-      presentationMessagesRepository: mocks.presentationMessagesRepository,
-      presentationVerifiersRepository: mocks.presentationVerifiersRepository,
-      presentationsRepository: mocks.presentationsRepository,
-      messagesRepository: mocks.messagesRepository,
-      privateKeyRepository: mocks.privateKeyRepository,
-      vcClaimsRepository: mocks.vcClaimsRepository,
-    });
+    mocks.getRequestContextMock.mockReturnValue(baseContext());
   });
 
   it('lists identifiers with default pagination', async () => {

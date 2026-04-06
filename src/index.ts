@@ -1,37 +1,23 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { contextStorage } from 'hono/context-storage';
-import { CredentialMessagesRepository } from './credential-messages';
 import { CredentialsRepository } from './credentials';
 import credentials from './credentials/credentials.handler';
-import { EncryptedCredentialsRepository } from './encrypted-credentials';
 import { getEnv } from './env';
 import { IdentifiersRepository } from './identifiers';
 import identifiers from './identifiers/identifiers.handler';
-import { KeysRepository } from './keys';
-import { MessagesRepository } from './messages';
-import { PresentationCredentialsRepository } from './presentation-credentials';
-import { PresentationMessagesRepository } from './presentation-messages';
-import { PresentationVerifiersRepository } from './presentation-verifiers';
-import { PresentationsRepository } from './presentations';
+import { MessageStoreRepository } from './messages';
 import { PrivateKeyRepository } from './private-key';
 import { registerPublicCredentialRoute } from './public/credentials.routes';
 import { registerDidRoute } from './public/did.routes';
 import { authMiddleware, dependencyMiddlewareFactory } from './request-context';
-import { VcClaimsRepository } from './vc-claims';
+import { createUntpHandler } from './untp';
 
 export type AppOptions = {
-  credentialMessagesRepository: CredentialMessagesRepository;
   credentialsRepository: CredentialsRepository;
-  encryptedCredentialsRepository: EncryptedCredentialsRepository;
   identifiersRepository: IdentifiersRepository;
-  keysRepository: KeysRepository;
-  messagesRepository: MessagesRepository;
-  presentationCredentialsRepository: PresentationCredentialsRepository;
-  presentationMessagesRepository: PresentationMessagesRepository;
-  presentationsRepository: PresentationsRepository;
-  presentationVerifiersRepository: PresentationVerifiersRepository;
+  messageStoreRepository: MessageStoreRepository;
   privateKeyRepository: PrivateKeyRepository;
-  vcClaimsRepository: VcClaimsRepository;
+  kmsSecretKey?: string;
 };
 
 export function createApp(options: AppOptions) {
@@ -52,6 +38,7 @@ export function createApp(options: AppOptions) {
 
   app.route('/identifiers', identifiers);
   app.route('/credentials', credentials);
+  app.route('/untp', createUntpHandler());
 
   return app;
 }

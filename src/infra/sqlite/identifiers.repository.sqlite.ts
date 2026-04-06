@@ -1,4 +1,4 @@
-import type { IIdentifier } from '@veramo/core';
+import type { IIdentifier, IKey, ManagedKeyInfo } from '@veramo/core';
 import type { SQL } from 'drizzle-orm';
 import { and, eq, InferSelectModel } from 'drizzle-orm';
 import { cryptoKeys, identifiers, services as servicesTable } from 'src/db/schema/identifiers';
@@ -223,6 +223,67 @@ export class IdentifiersRepositorySqlite implements IdentifiersRepository {
       .limit(filter.limit ?? 100);
 
     return results.map((result) => this.toIdentifier(result));
+  }
+
+  async saveKey(key: Partial<IKey>): Promise<void> {
+    if (!key.kid || !key.type || !key.kms || !key.publicKeyHex) {
+      throw new Error('Missing required key properties');
+    }
+    await this.db
+      .insert(cryptoKeys)
+      .values({
+        kid: key.kid,
+        publicKeyHex: key.publicKeyHex,
+        privateKeyHex: key.privateKeyHex,
+        type: key.type,
+        kms: key.kms,
+        meta: key.meta,
+        identifierDid: key.meta?.identifierDid as string | null | undefined,
+      })
+      .onConflictDoUpdate({
+        target: cryptoKeys.kid,
+        set: {
+          publicKeyHex: key.publicKeyHex,
+          privateKeyHex: key.privateKeyHex,
+          type: key.type,
+          kms: key.kms,
+          meta: key.meta,
+          identifierDid: key.meta?.identifierDid as string | null | undefined,
+        },
+      });
+  }
+
+  async findKey(kid: string): Promise<IKey | null> {
+    const [result] = await this.db
+      .select()
+      .from(cryptoKeys)
+      .where(eq(cryptoKeys.kid, kid))
+      .limit(1);
+    if (!result) return null;
+    return {
+      kid: result.kid,
+      kms: result.kms,
+      type: result.type,
+      publicKeyHex: result.publicKeyHex,
+      privateKeyHex: result.privateKeyHex ?? undefined,
+      meta: result.meta ?? undefined,
+    };
+  }
+
+  async deleteKey(kid: string): Promise<void> {
+    await this.db.delete(cryptoKeys).where(eq(cryptoKeys.kid, kid));
+  }
+
+  async listKeys(): Promise<ManagedKeyInfo[]> {
+    const results = await this.db.select().from(cryptoKeys);
+    return results.map((key) => ({
+      kid: key.kid,
+      kms: key.kms,
+      type: key.type,
+      publicKeyHex: key.publicKeyHex,
+      privateKeyHex: key.privateKeyHex ?? undefined,
+      meta: key.meta ?? undefined,
+    }));
   }
 
   private toIdentifier(identifier: DbIdentifier): Identifier {

@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { messages } from 'src/db/schema';
-import { MessageInsert, MessageRecord, MessagesRepository } from 'src/messages';
+import { MessageInsert, MessageRecord } from 'src/messages';
 import { SqliteDb } from './sqlite-drizzle';
 
-export class MessagesRepositorySqlite implements MessagesRepository {
+export class MessagesRepositorySqlite {
   constructor(private db: SqliteDb) {}
 
   async saveMessage(message: MessageInsert): Promise<void> {

@@ -1,4 +1,4 @@
-import type { IIdentifier } from '@veramo/core';
+import type { IIdentifier, IKey, ManagedKeyInfo } from '@veramo/core';
 import type { UpdateIdentifierDto } from './identifiers.dto';
 import type { Identifier } from './identifiers.service';
 
@@ -20,4 +20,8 @@ export interface IdentifiersRepository {
   deleteIdentifierByDid(did: string): Promise<void>;
   listIdentifierDetails(filter?: IdentifierListFilter): Promise<IIdentifier[]>;
   listIdentifiers(filter?: IdentifierListFilter): Promise<Identifier[]>;
+  saveKey(key: Partial<IKey>): Promise<void>;
+  findKey(kid: string): Promise<IKey | null>;
+  deleteKey(kid: string): Promise<void>;
+  listKeys(): Promise<ManagedKeyInfo[]>;
 }

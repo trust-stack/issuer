@@ -1,6 +1,6 @@
 import { IKey, ManagedKeyInfo } from '@veramo/core';
 import { AbstractKeyStore } from '@veramo/key-manager';
-import { KeysRepository } from 'src/keys';
+import { IdentifiersRepository } from 'src/identifiers';
 import { getRequestContext } from 'src/request-context';
 
 export class KeyStore implements AbstractKeyStore {
@@ -28,8 +28,8 @@ export class KeyStore implements AbstractKeyStore {
     return repository.listKeys();
   }
 
-  private getRepository(): KeysRepository {
-    const { keysRepository } = getRequestContext();
-    return keysRepository;
+  private getRepository(): IdentifiersRepository {
+    const { identifiersRepository } = getRequestContext();
+    return identifiersRepository;
   }
 }
