@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "drizzle:generate": "drizzle-kit generate",
-    "drizzle:migrate": "drizzle-kit migrate"
+    "drizzle:migrate": "drizzle-kit migrate",
+    "generate:untp-types": "tsx scripts/generate-untp-types.ts"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "@types/node": "^24.5.2",
     "better-sqlite3": "^12.4.1",
     "husky": "^9.0.11",
+    "json-schema-to-typescript": "^15.0.4",
     "lint-staged": "^15.2.7",
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
