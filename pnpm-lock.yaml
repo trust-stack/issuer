@@ -92,6 +92,9 @@ importers:
       husky:
         specifier: ^9.0.11
         version: 9.1.7
+      json-schema-to-typescript:
+        specifier: ^15.0.4
+        version: 15.0.4
       lint-staged:
         specifier: ^15.2.7
         version: 15.5.2
@@ -131,6 +134,13 @@ packages:
       {
         integrity: sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==,
       }
+
+  '@apidevtools/json-schema-ref-parser@11.9.3':
+    resolution:
+      {
+        integrity: sha512-60vepv88RwcJtSHrD6MjIL6Ta3SOYbgfnkHb+ppAVK+o9mXprRtulx7VlRl3lN3bbvysAfCS7WMVfhUYemB0IQ==,
+      }
+    engines: { node: '>= 16' }
 
   '@asteasolutions/zod-to-openapi@8.1.0':
     resolution:
@@ -1920,6 +1930,12 @@ packages:
         integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==,
       }
 
+  '@jsdevtools/ono@7.1.3':
+    resolution:
+      {
+        integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==,
+      }
+
   '@multiformats/base-x@4.0.1':
     resolution:
       {
@@ -2735,6 +2751,12 @@ packages:
     resolution:
       {
         integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==,
+      }
+
+  '@types/lodash@4.17.24':
+    resolution:
+      {
+        integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==,
       }
 
   '@types/node@22.7.5':
@@ -5375,6 +5397,14 @@ packages:
         integrity: sha512-vLWcKbOaXlO+jvRy4qNd+TI1QUPZzfJj1tpJ3vAXDych5XJf93ftpUKe5pKCrzyIIwgBJcOcCVRUfqQP25afBw==,
       }
 
+  json-schema-to-typescript@15.0.4:
+    resolution:
+      {
+        integrity: sha512-Su9oK8DR4xCmDsLlyvadkXzX6+GGXJpbhwoLtOGArAG61dvbW4YQmSEno2y66ahpIdmLMg6YUf/QHLgiwvkrHQ==,
+      }
+    engines: { node: '>=16.0.0' }
+    hasBin: true
+
   json-schema-traverse@1.0.0:
     resolution:
       {
@@ -5655,6 +5685,12 @@ packages:
     resolution:
       {
         integrity: sha512-wIkUCfVKpVsWo3JSZlc+8MB5it+2AN5W8J7YVMST30UrvcQNZ1Okbj+rbVniijTWE6FGYy4XJq/rHkas8qJMLQ==,
+      }
+
+  lodash@4.18.1:
+    resolution:
+      {
+        integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==,
       }
 
   log-symbols@2.2.0:
@@ -8338,6 +8374,12 @@ snapshots:
 
   '@adraffy/ens-normalize@1.10.1': {}
 
+  '@apidevtools/json-schema-ref-parser@11.9.3':
+    dependencies:
+      '@jsdevtools/ono': 7.1.3
+      '@types/json-schema': 7.0.15
+      js-yaml: 4.1.0
+
   '@asteasolutions/zod-to-openapi@8.1.0(zod@4.1.11)':
     dependencies:
       openapi3-ts: 4.5.0
@@ -9906,6 +9948,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  '@jsdevtools/ono@7.1.3': {}
+
   '@multiformats/base-x@4.0.1': {}
 
   '@noble/ciphers@1.3.0': {}
@@ -10496,6 +10540,8 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/lodash@4.17.24': {}
+
   '@types/node@22.7.5':
     dependencies:
       undici-types: 6.19.8
@@ -10912,8 +10958,7 @@ snapshots:
       sprintf-js: 1.0.3
     optional: true
 
-  argparse@2.0.1:
-    optional: true
+  argparse@2.0.1: {}
 
   asap@2.0.6:
     optional: true
@@ -12274,8 +12319,7 @@ snapshots:
   is-docker@2.2.1:
     optional: true
 
-  is-extglob@2.1.1:
-    optional: true
+  is-extglob@2.1.1: {}
 
   is-fullwidth-code-point@3.0.0: {}
 
@@ -12288,7 +12332,6 @@ snapshots:
   is-glob@4.0.3:
     dependencies:
       is-extglob: 2.1.1
-    optional: true
 
   is-number@7.0.0: {}
 
@@ -12455,7 +12498,6 @@ snapshots:
   js-yaml@4.1.0:
     dependencies:
       argparse: 2.0.1
-    optional: true
 
   jsc-safe-url@0.2.4:
     optional: true
@@ -12470,6 +12512,18 @@ snapshots:
     dependencies:
       foreach: 2.0.6
     optional: true
+
+  json-schema-to-typescript@15.0.4:
+    dependencies:
+      '@apidevtools/json-schema-ref-parser': 11.9.3
+      '@types/json-schema': 7.0.15
+      '@types/lodash': 4.17.24
+      is-glob: 4.0.3
+      js-yaml: 4.1.0
+      lodash: 4.18.1
+      minimist: 1.2.8
+      prettier: 3.6.2
+      tinyglobby: 0.2.15
 
   json-schema-traverse@1.0.0: {}
 
@@ -12644,6 +12698,8 @@ snapshots:
 
   lodash.throttle@4.1.1:
     optional: true
+
+  lodash@4.18.1: {}
 
   log-symbols@2.2.0:
     dependencies:
