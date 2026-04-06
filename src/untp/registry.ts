@@ -1,14 +1,10 @@
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-
-const ProductSchema = require('./schemas/0.7.0/Product.json');
-const ConformityAttestationSchema = require('./schemas/0.7.0/ConformityAttestation.json');
-const MakeEventSchema = require('./schemas/0.7.0/MakeEvent.json');
-const MoveEventSchema = require('./schemas/0.7.0/MoveEvent.json');
-const ModifyEventSchema = require('./schemas/0.7.0/ModifyEvent.json');
-const FacilitySchema = require('./schemas/0.7.0/Facility.json');
-const RegisteredIdentitySchema = require('./schemas/0.7.0/RegisteredIdentity.json');
+import ConformityAttestationSchema from './schemas/0.7.0/ConformityAttestation.json';
+import FacilitySchema from './schemas/0.7.0/Facility.json';
+import MakeEventSchema from './schemas/0.7.0/MakeEvent.json';
+import ModifyEventSchema from './schemas/0.7.0/ModifyEvent.json';
+import MoveEventSchema from './schemas/0.7.0/MoveEvent.json';
+import ProductSchema from './schemas/0.7.0/Product.json';
+import RegisteredIdentitySchema from './schemas/0.7.0/RegisteredIdentity.json';
 
 export type CredentialTypeMeta = {
   /** URL path segment, e.g. 'dpp' */
