@@ -14,7 +14,8 @@
     "prepare": "husky",
     "drizzle:generate": "drizzle-kit generate",
     "drizzle:migrate": "drizzle-kit migrate",
-    "generate:untp-types": "tsx scripts/generate-untp-types.ts"
+    "generate:untp-types": "tsx scripts/generate-untp-types.ts",
+    "generate:untp-validators": "tsx scripts/generate-untp-validators.ts"
   },
   "keywords": [],
   "author": "",

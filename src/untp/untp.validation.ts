@@ -1,50 +1,55 @@
-import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020';
-import addFormats from 'ajv-formats';
-import { UNTP_VERSIONS } from './registry';
+import type { ErrorObject } from 'ajv';
+import * as untpValidators070 from './validators-generated/0.7.0/index.js';
 
 export type ValidateResult = { valid: true } | { valid: false; errors: string[] };
 
+/** Shape of Ajv standalone `compile()` output (not assignable to `ValidateFunction` in types). */
+type StandaloneValidator = ((data: unknown) => boolean) & {
+  errors?: ErrorObject[] | null;
+};
+
 /**
- * For single-schema types (dpp, dcc, dfr, dia): one ValidateFunction.
- * For multi-schema types (dte): array of ValidateFunctions (one per event type).
+ * Precompiled Ajv validators (standalone code, no `new Function`).
+ * Safe for Cloudflare Workers and other contexts that disallow eval / dynamic codegen.
  */
-const validators = new Map<string, ValidateFunction | ValidateFunction[]>();
+const validators = new Map<string, StandaloneValidator | StandaloneValidator[]>();
 let initialized = false;
 
 function key(version: string, code: string): string {
   return `${version}:${code}`;
 }
 
+/** Maps each supported UNTP version to credential validators from generated modules. */
+const VERSION_VALIDATORS: Record<
+  string,
+  Record<string, StandaloneValidator | StandaloneValidator[]>
+> = {
+  '0.7.0': {
+    dpp: untpValidators070.validateDpp,
+    dcc: untpValidators070.validateDcc,
+    dfr: untpValidators070.validateDfr,
+    dia: untpValidators070.validateDia,
+    dte: [
+      untpValidators070.validateDteMake,
+      untpValidators070.validateDteMove,
+      untpValidators070.validateDteModify,
+    ],
+  },
+};
+
 function init(): void {
   if (initialized) return;
 
-  for (const versionConfig of UNTP_VERSIONS) {
-    for (const credType of versionConfig.credentialTypes) {
-      const schemas = Array.isArray(credType.subjectSchema)
-        ? credType.subjectSchema
-        : [credType.subjectSchema];
-
-      if (schemas.length === 1) {
-        const ajv = new Ajv2020({ allErrors: true, strict: false });
-        addFormats(ajv);
-        validators.set(key(versionConfig.version, credType.code), ajv.compile(schemas[0]));
-      } else {
-        // Multiple schemas (DTE events) — compile each in its own AJV instance
-        // to avoid $defs collisions, then validate as "any of" at runtime
-        const compiled = schemas.map((s) => {
-          const ajv = new Ajv2020({ allErrors: true, strict: false });
-          addFormats(ajv);
-          return ajv.compile(s);
-        });
-        validators.set(key(versionConfig.version, credType.code), compiled);
-      }
+  for (const [version, byCode] of Object.entries(VERSION_VALIDATORS)) {
+    for (const [code, v] of Object.entries(byCode)) {
+      validators.set(key(version, code), v);
     }
   }
 
   initialized = true;
 }
 
-function validateSingle(validate: ValidateFunction, data: unknown): ValidateResult {
+function validateSingle(validate: StandaloneValidator, data: unknown): ValidateResult {
   const valid = validate(data);
   if (valid) return { valid: true };
   const errors = (validate.errors ?? []).map((err) => `${err.instancePath}: ${err.message}`);
@@ -52,14 +57,13 @@ function validateSingle(validate: ValidateFunction, data: unknown): ValidateResu
 }
 
 function validateAgainstAny(
-  fns: ValidateFunction[],
+  fns: StandaloneValidator[],
   data: unknown,
   prefix: string,
 ): ValidateResult {
   for (const fn of fns) {
     if (fn(data)) return { valid: true };
   }
-  // None matched — collect errors from all validators for diagnostic value
   const errors: string[] = [];
   for (const fn of fns) {
     fn(data);
@@ -85,7 +89,6 @@ export function validateCredentialSubject(
     return { valid: false, errors: [`No schema registered for ${version}/${code}`] };
   }
 
-  // DTE credentialSubject is an array of events
   if (Array.isArray(data)) {
     if (data.length === 0) {
       return { valid: false, errors: ['credentialSubject array must not be empty'] };
@@ -112,7 +115,6 @@ export function validateCredentialSubject(
     return allErrors.length === 0 ? { valid: true } : { valid: false, errors: allErrors };
   }
 
-  // Single object credentialSubject
   if (Array.isArray(validator)) {
     return validateAgainstAny(validator, data, '');
   }
